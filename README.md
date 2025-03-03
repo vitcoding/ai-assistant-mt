@@ -1,1 +1,1 @@
-# ai-assistant-mt
+# AI Assistant
