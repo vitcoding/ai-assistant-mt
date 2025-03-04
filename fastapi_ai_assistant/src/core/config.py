@@ -30,6 +30,33 @@ class GPTConfig(BaseSettings):
         env_prefix = "GPT_"
 
 
+class LLMModelConfig(BaseSettings):
+    """
+    LLM model configuration settings.
+    """
+
+    host: str = Field(default="127.0.0.1")
+    port: int = Field(default=11434)
+    model: str = Field(default="llama3.2:3b")
+    provider: str = Field(default="ollama")
+    embedding_model: str = Field(default="evilfreelancer/enbeddrus")
+
+    class Config:
+        env_prefix = "OLLAMA_"
+
+
+class VectorDB(BaseSettings):
+    """
+    Vector db configuration settings.
+    """
+
+    host: str = Field(default="127.0.0.1")
+    port: int = Field(default=8010)
+
+    class Config:
+        env_prefix = "CHROMA_"
+
+
 class UrlConfig(BaseSettings):
     search: str = Field(default="http://0.0.0.0:8000")
 
@@ -58,6 +85,8 @@ class Config(BaseSettings):
 
     globals: GlobalConfig = GlobalConfig()
     gpt: GPTConfig = GPTConfig()
+    llm: LLMModelConfig = LLMModelConfig()
+    vector_db: VectorDB = VectorDB()
     url: UrlConfig = UrlConfig()
     auth: AuthConfig = AuthConfig()
 

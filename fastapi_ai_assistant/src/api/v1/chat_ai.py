@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import (
@@ -10,6 +11,8 @@ from fastapi import (
     status,
 )
 from fastapi.responses import HTMLResponse
+
+from services.chat_ai import ChatAI
 
 router = APIRouter()
 
@@ -36,7 +39,7 @@ html = """
             function connect(event) {
                 var itemId = document.getElementById("itemId")
                 var token = document.getElementById("token")
-                ws = new WebSocket("ws://localhost:8005/api/v1/chat2/items/" + itemId.value + "/ws?token=" + token.value);
+                ws = new WebSocket("ws://localhost:8005/api/v1/chat_ai/items/" + itemId.value + "/ws?token=" + token.value);
                 ws.onmessage = function(event) {
                     var messages = document.getElementById('messages')
                     var message = document.createElement('li')
@@ -58,6 +61,7 @@ html = """
 """
 
 
+# url: http://localhost:8005/api/v1/chat_ai/
 @router.get("/")
 async def get():
     return HTMLResponse(html)
@@ -82,13 +86,13 @@ async def websocket_endpoint(
     cookie_or_token: Annotated[str, Depends(get_cookie_or_token)],
 ):
     await websocket.accept()
+    chat = ChatAI(item_id)
     while True:
-        data = await websocket.receive_text()
+        user_message = await websocket.receive_text()
+        user_message_timestamp = datetime.now().isoformat()
         await websocket.send_text(
-            f"Session cookie or query token value is: {cookie_or_token}"
+            f"[{user_message_timestamp}] Я: {user_message}"
         )
-        if q is not None:
-            await websocket.send_text(f"Query parameter q is: {q}")
-        await websocket.send_text(
-            f"Message text was: {data}, for item ID: {item_id}"
-        )
+        ai_message = await chat.process(user_message)
+        ai_message_timestamp = datetime.now().isoformat()
+        await websocket.send_text(f"[{ai_message_timestamp}] ИИ: {ai_message}")
