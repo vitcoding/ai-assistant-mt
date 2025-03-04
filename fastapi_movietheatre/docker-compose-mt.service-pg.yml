@@ -1,0 +1,93 @@
+name: fastapi-search-service
+
+services:
+  mt-data-db:
+    image: postgres:16
+    container_name: ${POSTGRES_DB}
+    env_file:
+      - ./.env
+    volumes:
+      - movies-database:/var/lib/postgresql/data
+      - ./data/database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    expose:
+      - ${POSTGRES_PORT}
+    restart: always
+    networks:
+      - shared-network
+
+  mt-search-db:
+    image: elasticsearch:8.6.2
+    container_name: ${ELASTICSEARCH_DB}
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: -Xms150m -Xmx150m
+    env_file:
+      - ./.env
+    volumes:
+      - mt-search-data:/usr/share/elasticsearch/data
+    expose:
+      - ${ELASTICSEARCH_PORT}
+    restart: always
+    networks:
+      - shared-network
+
+  mt-etl:
+    build: ./etl
+    env_file:
+      - ./.env
+    depends_on:
+      - mt-data-db
+      - mt-search-db
+      - mt-cache
+    networks:
+      - shared-network
+
+  mt-cache:
+    image: redis
+    container_name: ${REDIS_DB}
+    expose:
+      - ${REDIS_PORT}
+    volumes:
+      - mt-cache-data:/data
+      - mt.redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+    networks:
+      - shared-network
+
+  mt-nginx:
+    image: nginx:alpine3.18
+    container_name: mt-nginx
+    ports:
+      - ${SERVICE_PORT}:${NGINX_PORT}
+    volumes:
+      - ./data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - shared-network
+
+  mt-search-service:
+    build: ./fastapi-solution
+    container_name: mt_search_service
+    expose:
+      - 8000
+    env_file:
+      - ./.env
+    depends_on:
+      - mt-search-db
+      - mt-cache
+      - mt-nginx
+    networks:
+      - shared-network
+
+volumes:
+  movies-database:
+  mt-search-data:
+  etl-data:
+  mt-cache-data:
+  mt.redis.conf:
+
+
+networks:
+  shared-network:
+    external: true
