@@ -93,6 +93,8 @@ auth-prj:
 	code fastapi_auth/src
 mt-prj:
 	code fastapi_movietheatre/fastapi-solution/src
+ai-prj:
+	code fastapi_ai_assistant/src
 
 
 # other
