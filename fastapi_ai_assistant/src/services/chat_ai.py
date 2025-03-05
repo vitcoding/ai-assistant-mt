@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from typing import Sequence
 
+import chromadb
+import ollama
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import (
     BaseMessage,
@@ -17,6 +19,9 @@ from typing_extensions import Annotated, TypedDict
 from core.config import config
 from core.logger import log
 
+EMBEDDING_MODEL_NAME = config.llm.embedding_model
+CHROMA_COLLECTION_NAME = "example_langchain"
+
 MODEL_NAME = config.llm.model
 PROVIDER = config.llm.provider
 
@@ -31,21 +36,21 @@ MODEL_KWARGS = {
 
 prompt_template = ChatPromptTemplate.from_messages(
     [
-        SystemMessage(
-            "You are a helpful assistant named 'AI Chat'. Answer all questions "
-            "to the best of your ability in {language}."
-            "{docs_content}",
-        ),
-        # (
-        #     "You are an assistant for question-answering tasks. "
-        #     "Use the following pieces of retrieved context to answer "
-        #     "the question. If you don't know the answer, say that you "
-        #     "don't know. Use three sentences maximum and keep the "
-        #     "answer concise."
-        #     "You must speak only {language}."
-        #     "\n\n"
-        #     "{docs_content}"
+        # SystemMessage(
+        #     "You are a helpful assistant named 'AI Chat'. Answer all questions "
+        #     "to the best of your ability in {language}."
+        #     "{docs_content}",
         # ),
+        SystemMessage(
+            "You are an assistant for question-answering tasks. "
+            "Use the following pieces of retrieved context to answer "
+            "the question. If you don't know the answer, say that you "
+            "don't know. Use three sentences maximum and keep the "
+            "answer concise."
+            "You must speak only {language}."
+            "\n\n"
+            "{docs_content}"
+        ),
         MessagesPlaceholder(variable_name="messages"),
     ]
 )
@@ -99,12 +104,29 @@ class ChatAI:
         response = await self.llm.ainvoke(prompt)
         return {"messages": response}
 
+    def get_docs(self, input_message):
+        chroma = chromadb.HttpClient(
+            host=config.vector_db.host,
+            port=config.vector_db.port,
+        )
+        collection = chroma.get_or_create_collection(CHROMA_COLLECTION_NAME)
+        queryembed = ollama.embeddings(
+            model=EMBEDDING_MODEL_NAME,
+            prompt=input_message,
+        )["embedding"]
+        relevantdocs = collection.query(
+            query_embeddings=[queryembed], n_results=3
+        )["documents"][0]
+        log.debug(f"{__name__}: relevantdocs: \n{relevantdocs}")
+        return relevantdocs
+
     async def process(self, input_message):
         log.info(f"{__name__}: {self.process.__name__}: start")
 
         # docs content
-        # docs_content = "\n\n".join(doc.content for doc in docs)
-        docs_content = ""
+        docs_content = "\n\n".join(doc for doc in self.get_docs(input_message))
+        log.debug(f"{__name__}: rdocs_content: \n{docs_content}")
+        # docs_content = ""
 
         # stream
         async for step in self.graph.astream(
