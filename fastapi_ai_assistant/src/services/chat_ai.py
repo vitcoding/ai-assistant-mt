@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Sequence
 
-import chromadb
 import ollama
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import (
@@ -18,6 +17,7 @@ from typing_extensions import Annotated, TypedDict
 
 from core.config import config
 from core.logger import log
+from db.vector_db import get_vector_db_client
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "example_langchain"
@@ -80,9 +80,9 @@ class ChatAI:
         self.graph_builder = StateGraph(state_schema=State)
         self.memory = MemorySaver()
         self.chat_config = {"configurable": {"thread_id": chat_id}}
-        self.graph = self._set_workflow(chat_id)
+        self.graph = self._set_workflow()
 
-    def _set_workflow(self, thread_id):
+    def _set_workflow(self):
         log.info(f"{__name__}: {self._set_workflow.__name__}: start")
 
         self.graph_builder.add_edge(START, "model")
@@ -104,27 +104,38 @@ class ChatAI:
         response = await self.llm.ainvoke(prompt)
         return {"messages": response}
 
-    def get_docs(self, input_message):
-        chroma = chromadb.HttpClient(
-            host=config.vector_db.host,
-            port=config.vector_db.port,
+    async def get_docs(self, input_message):
+        vector_db_client = await get_vector_db_client()
+        collection = await vector_db_client.get_or_create_collection(
+            CHROMA_COLLECTION_NAME
         )
-        collection = chroma.get_or_create_collection(CHROMA_COLLECTION_NAME)
         queryembed = ollama.embeddings(
             model=EMBEDDING_MODEL_NAME,
             prompt=input_message,
         )["embedding"]
-        relevantdocs = collection.query(
+
+        relevant_docs_data = await collection.query(
             query_embeddings=[queryembed], n_results=3
-        )["documents"][0]
-        log.debug(f"{__name__}: relevantdocs: \n{relevantdocs}")
-        return relevantdocs
+        )
+        log.info(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
+
+        docs_metadata = relevant_docs_data["metadatas"][0]
+        relevant_docs = relevant_docs_data["documents"][0]
+        log.debug(f"{__name__}: relevant_docs: \n{relevant_docs}")
+        log.debug(f"{__name__}: docs_metadata: \n{docs_metadata}")  # source
+
+        return relevant_docs
 
     async def process(self, input_message):
         log.info(f"{__name__}: {self.process.__name__}: start")
 
+        if not input_message:
+            log.info(f"{__name__}: {self.process.__name__}: end (no input)")
+            return "?"
+
         # docs content
-        docs_content = "\n\n".join(doc for doc in self.get_docs(input_message))
+        docs = await self.get_docs(input_message)
+        docs_content = "\n\n".join(doc for doc in docs)
         log.debug(f"{__name__}: rdocs_content: \n{docs_content}")
         # docs_content = ""
 
@@ -148,11 +159,11 @@ class ChatAI:
                     model = response_metadata["model"]
                 except KeyError:
                     model = "no info"
-                    step_type = f"AI message ('model: {model}')"
+                step_type = f"AI message ('model: {model}')"
             else:
                 step_type = "User message"
 
-            log.warning(
+            log.info(
                 f"{__name__}: {self.process.__name__}: "
                 f"\nStep {step_type}: \ncontent:\n'''\n{content}\n'''"
             )
