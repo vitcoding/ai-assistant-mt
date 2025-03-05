@@ -9,4 +9,5 @@ websockets==15.0
 langchain==0.3.19
 langchain-ollama==0.2.3
 langgraph==0.3.1
-langchain-chroma==0.2.2
+# langchain-chroma==0.2.2
+transformers==4.49.0

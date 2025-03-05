@@ -79,6 +79,6 @@ if not os.path.exists(directory):
 file_handler = logging.FileHandler(
     filename=file_path, mode="a", encoding="utf-8"
 )
-file_handler.setLevel(logging.WARNING)
+file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 log.addHandler(file_handler)
