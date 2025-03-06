@@ -27,14 +27,14 @@ MODEL_NAME = config.llm.model
 PROVIDER = config.llm.provider
 MODEL_KWARGS = {
     "keep_alive": 300,
-    "max_new_tokens": 500,
+    "max_new_tokens": 1_000,
     "temperature": 0.3,
     "repetition_penalty": 1.2,
 }
 
 # Embedding
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
-EMBEDDING_SEARCH_RESULTS = 10
+EMBEDDING_SEARCH_RESULTS = 3
 
 # Chat config params
 CHAT_MAX_TOKENS = 10_000
@@ -46,15 +46,17 @@ prompt_template = ChatPromptTemplate.from_messages(
         #     "to the best of your ability in {language}."
         #     "{docs_content}",
         # ),
-        SystemMessage(
-            "You are an assistant for question-answering tasks. "
-            "Use the following pieces of retrieved context to answer "
+        (
+            "system",
+            "Your name is 'ИИ Ассистент'. "
+            "You are an assistant for question-answering tasks. \n"
+            "Use the retrieved documents of retrieved context to answer "
             "the question. If you don't know the answer, say that you "
             "don't know. Use three sentences maximum and keep the "
-            "answer concise."
+            "answer concise. "
             "You must speak only {language}."
-            "\n\n"
-            "{docs_content}"
+            "\n\n\n"
+            "Retrieved context:\n\n{docs_content}",
         ),
         MessagesPlaceholder(variable_name="messages"),
     ]
@@ -123,13 +125,24 @@ class ChatAI:
             query_embeddings=[queryembed],
             n_results=EMBEDDING_SEARCH_RESULTS,
         )
-        log.info(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
+        log.debug(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
 
-        docs_metadata = relevant_docs_data["metadatas"][0]
-        relevant_docs = relevant_docs_data["documents"][0]
-        log.debug(f"{__name__}: relevant_docs: \n{relevant_docs}")
-        log.debug(f"{__name__}: docs_metadata: \n{docs_metadata}")  # source
+        metadatas = relevant_docs_data["metadatas"][0]
+        sources = [metadata.get("source") for metadata in metadatas]
+        retrieved_docs = relevant_docs_data["documents"][0]
 
+        retrieved_data = [
+            data
+            for data in zip(
+                range(1, len(sources) + 1), sources, retrieved_docs
+            )
+        ]
+        relevant_docs = [
+            f"The retrieved document {data[0]}:\nSource: '{data[1]}'\n"
+            f"The context of the document:\n'{data[2]}'"
+            for data in retrieved_data
+        ]
+        # log.debug(f"{__name__}: relevant_docs: \n\n{relevant_docs}")
         return relevant_docs
 
     async def process(self, input_message):
@@ -141,9 +154,11 @@ class ChatAI:
 
         # docs content
         docs = await self.get_docs(input_message)
-        docs_content = "\n\n".join(doc for doc in docs)
-        log.debug(f"{__name__}: rdocs_content: \n{docs_content}")
-        # docs_content = ""
+        if isinstance(docs, (list, tuple)):
+            docs_content = "\n\n".join(doc for doc in docs)
+        else:
+            docs_content = ""
+        log.info(f"{__name__}: docs_content: \n{docs_content}")
 
         # stream
         async for step in self.graph.astream(
