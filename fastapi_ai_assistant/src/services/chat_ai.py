@@ -22,17 +22,22 @@ from db.vector_db import get_vector_db_client
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "example_langchain"
 
+# LLM
 MODEL_NAME = config.llm.model
 PROVIDER = config.llm.provider
-
-EMBEDDING_MODEL_NAME = config.llm.embedding_model
-
 MODEL_KWARGS = {
     "keep_alive": 300,
-    "max_new_tokens": 100,
+    "max_new_tokens": 500,
     "temperature": 0.3,
     "repetition_penalty": 1.2,
 }
+
+# Embedding
+EMBEDDING_MODEL_NAME = config.llm.embedding_model
+EMBEDDING_SEARCH_RESULTS = 10
+
+# Chat config params
+CHAT_MAX_TOKENS = 10_000
 
 prompt_template = ChatPromptTemplate.from_messages(
     [
@@ -70,7 +75,7 @@ class ChatAI:
             model=MODEL_NAME, model_provider=PROVIDER, **MODEL_KWARGS
         )
         self.trimmer = trim_messages(
-            max_tokens=10_000,
+            max_tokens=CHAT_MAX_TOKENS,
             strategy="last",
             token_counter=self.llm,
             include_system=True,
@@ -115,7 +120,8 @@ class ChatAI:
         )["embedding"]
 
         relevant_docs_data = await collection.query(
-            query_embeddings=[queryembed], n_results=3
+            query_embeddings=[queryembed],
+            n_results=EMBEDDING_SEARCH_RESULTS,
         )
         log.info(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
 
