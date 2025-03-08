@@ -90,3 +90,25 @@ class RedisSettings(BaseSettings):
     db: int = Field(default=0)
     host: str = Field(default="redis", env="REDIS_HOST")
     port: int = Field(default=6379, env="REDIS_PORT")
+
+
+class ChromaSettings(BaseSettings):
+    """
+    Настройки для подключения к Chroma db.
+    """
+
+    host: str = Field(default="chroma-ai", env="CHROMA_HOST")
+    port: int = Field(default=8000, env="CHROMA_PORT")
+
+
+class OllamaSettings(BaseSettings):
+    """
+    Настройки для подключения к Ollama.
+    """
+
+    host: str = Field(default="ollama-ai", env="OLLAMA_HOST")
+    port: int = Field(default=11434, env="OLLAMA_PORT")
+
+
+chroma_config = ChromaSettings()
+ollama_config = OllamaSettings()

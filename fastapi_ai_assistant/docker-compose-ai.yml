@@ -1,0 +1,60 @@
+services:
+  ai_assistant_api:
+    build: .
+    container_name: ai_assistant_api
+    expose:
+      - 8000
+    # ports:
+    #   - "8005:8000"
+    env_file:
+      - ./.env
+    networks:
+      - shared-network
+
+  ai_assistant-nginx:
+    image: nginx:alpine3.18
+    container_name: ai_assistant-nginx
+    ports:
+      - 8005:80
+    volumes:
+      - ./data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+    # - ./_temp/data/logs/nginx-ai/:/var/log/nginx/
+    env_file:
+      - ./.env
+    networks:
+      - shared-network
+
+  ollama-ai:
+    image: ollama/ollama
+    container_name: ollama-ai
+    devices:
+      - "/dev/dri/card1:/dev/dri/card1"
+      - "/dev/dri/renderD128:/dev/dri/renderD128"
+    # devices:
+    #   - /dev/dri
+    environment:
+      - LIBGL_ALWAYS_SOFTWARE=0
+    ########
+    volumes:
+      - ../../exercises/ollama-ex/ollama:/root/.ollama
+    ports:
+      - 11434:11434
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  chroma-ai:
+    image: chromadb/chroma
+    container_name: chroma-ai
+    expose:
+      - 8000
+    ports:
+      - 8010:8000
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true

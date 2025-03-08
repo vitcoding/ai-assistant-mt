@@ -20,7 +20,8 @@ from core.logger import log
 from db.vector_db import get_vector_db_client
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
-CHROMA_COLLECTION_NAME = "example_langchain"
+CHROMA_COLLECTION_NAME = "films_mt"
+# CHROMA_COLLECTION_NAME = "example_langchain"
 
 # LLM
 MODEL_NAME = config.llm.model

@@ -13,6 +13,7 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 
 from services.chat_ai import ChatAI
+from core.logger import log
 
 router = APIRouter()
 
@@ -64,6 +65,7 @@ html = """
 # url: http://localhost:8005/api/v1/chat_ai/
 @router.get("/")
 async def get():
+    log.info(f"{__name__}: {get.__name__}: run")
     return HTMLResponse(html)
 
 
@@ -72,6 +74,7 @@ async def get_cookie_or_token(
     session: Annotated[str | None, Cookie()] = None,
     token: Annotated[str | None, Query()] = None,
 ):
+    log.info(f"{__name__}: {get_cookie_or_token.__name__}: run")
     if session is None and token is None:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
     return session or token
@@ -85,6 +88,7 @@ async def websocket_endpoint(
     q: int | None = None,
     cookie_or_token: Annotated[str, Depends(get_cookie_or_token)],
 ):
+    log.info(f"{__name__}: {websocket_endpoint.__name__}: run")
     await websocket.accept()
     chat = ChatAI(item_id)
     while True:

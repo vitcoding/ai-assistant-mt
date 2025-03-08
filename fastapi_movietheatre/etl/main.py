@@ -25,6 +25,7 @@ def run_etl(
     :param elastic: Загрузчик для отправки данных в Elasticsearch.
     :param state: Объект состояния для отслеживания времени последнего обновления.
     """
+
     timestamp = state.read_state("last_updated", datetime.min)
     for table, rows in postgres.get_updates(timestamp):
         if table == "genre":
@@ -58,6 +59,9 @@ def postgres_to_elastic(postgres, elasticsearch, redis):
             )
         except extract.UpdatesNotFoundError:
             logger.info("There are no updates.")
+        except Exception as err:
+            logger.error(f"Error '{type(err)}': \n{err}")
+            raise err
         else:
             logger.info("There are updates!")
             state.write_state(
