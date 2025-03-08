@@ -2,6 +2,7 @@ import os
 from logging import config as logging_config
 
 from dotenv import load_dotenv
+from fastapi.templating import Jinja2Templates
 from pydantic.v1 import BaseSettings, Field
 
 from core.logger import LOGGING
@@ -92,3 +93,5 @@ class Config(BaseSettings):
 
 
 config = Config()
+
+templates = Jinja2Templates(directory="api/v1/templates")

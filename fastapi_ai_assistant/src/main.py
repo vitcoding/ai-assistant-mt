@@ -3,6 +3,7 @@ import logging
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from api import router
 from core.config import config
@@ -14,6 +15,9 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
     default_response_class=ORJSONResponse,
 )
+
+app.mount("/static", StaticFiles(directory="api/v1/static"), name="static")
+
 
 app.include_router(router, prefix="/api")
 
