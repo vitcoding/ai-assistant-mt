@@ -6,5 +6,9 @@
 }
 
 li {
+    color:rgb(0, 0, 0);
+}
+
+.temporary {
     color:rgb(15, 15, 110);
 }

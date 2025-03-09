@@ -1,14 +1,10 @@
 from datetime import datetime, timezone
-from typing import Sequence
+from typing import Any, AsyncGenerator, Sequence
 
 import ollama
+from fastapi import WebSocket
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import (
-    BaseMessage,
-    HumanMessage,
-    SystemMessage,
-    trim_messages,
-)
+from langchain_core.messages import BaseMessage, HumanMessage, trim_messages
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, StateGraph
@@ -71,8 +67,14 @@ class State(TypedDict):
 
 
 class ChatAI:
-    def __init__(self, chat_id, language="Russian"):
+    """A class for working with AI chat."""
+
+    def __init__(
+        self, chat_id: str, websocket: WebSocket, language: str = "Russian"
+    ) -> None:
         self.language = language
+        self.user_role_name = self._get_user_role_name()
+        self.ai_role_name = self._get_ai_role_name()
         self.chat_start_timestamp = datetime.now(timezone.utc).isoformat()
         self.llm = init_chat_model(
             model=MODEL_NAME, model_provider=PROVIDER, **MODEL_KWARGS
@@ -89,18 +91,45 @@ class ChatAI:
         self.memory = MemorySaver()
         self.chat_config = {"configurable": {"thread_id": chat_id}}
         self.graph = self._set_workflow()
+        self.websocket = websocket
 
-    def _set_workflow(self):
-        log.info(f"{__name__}: {self._set_workflow.__name__}: start")
+    def _set_workflow(self) -> StateGraph:
+        """The chat workfow settings."""
+
+        log.debug(f"{__name__}: {self._set_workflow.__name__}: start")
 
         self.graph_builder.add_edge(START, "model")
         self.graph_builder.add_node("model", self._call_model)
 
         graph = self.graph_builder.compile(checkpointer=self.memory)
-        log.info(f"{__name__}: {self._set_workflow.__name__}: end")
+        log.debug(f"{__name__}: {self._set_workflow.__name__}: end")
         return graph
 
-    async def _call_model(self, state: State):
+    def _get_user_role_name(self) -> str:
+        """Gets the user role name."""
+
+        user_role_names = {"Russian": "Я", "English": "Me"}
+        user_role_name = (
+            user_role_names[self.language]
+            if self.language in user_role_names
+            else user_role_names["English"]
+        )
+        return user_role_name
+
+    def _get_ai_role_name(self) -> str:
+        """Gets the ai role name."""
+
+        ai_role_names = {"Russian": "ИИ", "English": "AI"}
+        ai_role_name = (
+            ai_role_names[self.language]
+            if self.language in ai_role_names
+            else ai_role_names["English"]
+        )
+        return ai_role_name
+
+    async def _call_model(self, state: State) -> dict[str, Any]:
+        """Provides model call."""
+
         trimmed_messages = await self.trimmer.ainvoke(state["messages"])
         prompt = await prompt_template.ainvoke(
             {
@@ -112,7 +141,9 @@ class ChatAI:
         response = await self.llm.ainvoke(prompt)
         return {"messages": response}
 
-    async def get_docs(self, input_message):
+    async def get_docs(self, input_message) -> list[str]:
+        """Gets relevant docs for retrieved context."""
+
         vector_db_client = await get_vector_db_client()
         collection = await vector_db_client.get_or_create_collection(
             CHROMA_COLLECTION_NAME
@@ -143,58 +174,75 @@ class ChatAI:
             f"The context of the document:\n'{data[2]}'"
             for data in retrieved_data
         ]
-        # log.debug(f"{__name__}: relevant_docs: \n\n{relevant_docs}")
         return relevant_docs
 
-    async def process(self, input_message: str, use_rag: bool) -> str:
-        log.info(f"{__name__}: {self.process.__name__}: start")
+    async def send_message(self, role: str, message: str) -> None:
+        """Sends a message to the chat."""
+
+        timestamp = datetime.now().isoformat()
+        await self.websocket.send_text(f"[{timestamp}] {role}: {message}")
+        await self.websocket.send_text("<<<end>>>")
+        log.info(
+            f"{__name__}: {self.process.__name__}: chat message:"
+            f"\n{role}: \n'''\n{message}\n'''"
+        )
+
+    async def process(
+        self, input_message: str, use_rag: bool
+    ) -> AsyncGenerator:
+        """Processes user messages."""
+
+        log.debug(f"{__name__}: {self.process.__name__}: start")
 
         if not input_message:
-            log.info(f"{__name__}: {self.process.__name__}: end (no input)")
-            return "?"
+            response_no_input = {
+                "Russian": "Вы ничего не ввели, напишите что-нибудь.",
+                "English": "You haven't entered anything, write something.",
+            }
+            system_message = (
+                response_no_input[self.language]
+                if self.language in response_no_input
+                else response_no_input["English"]
+            )
+            yield system_message
+            yield "<<<end>>>"
 
-        # docs content
-        docs = ""
-        if use_rag:
-            docs = await self.get_docs(input_message)
-        if isinstance(docs, (list, tuple)):
-            docs_content = "\n\n".join(doc for doc in docs)
+            log.debug(f"{__name__}: {self.process.__name__}: end (no input)")
         else:
-            docs_content = ""
-        log.info(f"{__name__}: docs_content: \n{docs_content}")
-
-        # stream
-        async for step in self.graph.astream(
-            {
-                "messages": HumanMessage(input_message),
-                "language": self.language,
-                "docs_content": docs_content,
-            },
-            stream_mode="values",
-            config=self.chat_config,
-        ):
-            step["messages"][-1].pretty_print()
-
-            last_step = step["messages"][-1]
-            content = getattr(last_step, "content")
-            response_metadata = getattr(last_step, "response_metadata")
-            if content and response_metadata:
-                try:
-                    model = response_metadata["model"]
-                except KeyError:
-                    model = "no info"
-                step_type = f"AI message ('model: {model}')"
+            # docs content
+            docs = ""
+            if use_rag:
+                docs = await self.get_docs(input_message)
+            if isinstance(docs, (list, tuple)):
+                docs_content = "\n\n".join(doc for doc in docs)
             else:
-                step_type = "User message"
-
+                docs_content = ""
             log.info(
                 f"{__name__}: {self.process.__name__}: "
-                f"\nStep {step_type}: \ncontent:\n'''\n{content}\n'''"
-            )
-            log.debug(
-                f"{__name__}: {self.process.__name__}: "
-                f"\nstep_message: \n{last_step}"
+                f"\ndocs_content: \n{docs_content}"
             )
 
-        log.info(f"{__name__}: {self.process.__name__}: end")
-        return content
+            # stream
+            message_list = []
+            async for chunc_data in self.graph.astream(
+                {
+                    "messages": HumanMessage(input_message),
+                    "language": self.language,
+                    "docs_content": docs_content,
+                },
+                stream_mode="messages",
+                config=self.chat_config,
+            ):
+                message_chunk = chunc_data[0].content
+                message_list.append(message_chunk)
+                yield message_chunk
+            yield "<<<end>>>"
+
+            ai_message = "".join(message_list) if message_list else ""
+
+            log.info(
+                f"{__name__}: {self.process.__name__}: chat message:"
+                f"\n{self.ai_role_name} \n'''\n{ai_message}\n'''"
+            )
+
+            log.debug(f"{__name__}: {self.process.__name__}: end")
