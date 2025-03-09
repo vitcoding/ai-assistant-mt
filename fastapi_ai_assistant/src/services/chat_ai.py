@@ -146,7 +146,7 @@ class ChatAI:
         # log.debug(f"{__name__}: relevant_docs: \n\n{relevant_docs}")
         return relevant_docs
 
-    async def process(self, input_message):
+    async def process(self, input_message: str, use_rag: bool) -> str:
         log.info(f"{__name__}: {self.process.__name__}: start")
 
         if not input_message:
@@ -154,7 +154,9 @@ class ChatAI:
             return "?"
 
         # docs content
-        docs = await self.get_docs(input_message)
+        docs = ""
+        if use_rag:
+            docs = await self.get_docs(input_message)
         if isinstance(docs, (list, tuple)):
             docs_content = "\n\n".join(doc for doc in docs)
         else:

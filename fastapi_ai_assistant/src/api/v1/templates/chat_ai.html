@@ -2,15 +2,25 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
     <title>Chat</title>
+    <link rel="stylesheet" href="/static/styles/chat_ai.css">
 </head>
 
 <body>
     <h1>WebSocket Chat</h1>
     <form action="" onsubmit="sendMessage(event)">
+
         <label>Item ID: <input type="text" id="itemId" autocomplete="off" value="foo" /></label>
         <label>Token: <input type="text" id="token" autocomplete="off" value="some-key-token" /></label>
         <button onclick="connect(event)">Connect</button>
+
+        <br>
+        <!-- <label for="checkbox_rag">Check this box</label> -->
+        <!-- <label><input type="checkbox" id="checkbox_rag" name="use_rag">Use RAG</label> -->
+        <input type="checkbox" id="checkbox_rag" name="use_rag">
+        <label for="checkbox_rag">Use RAG</label>
+
         <hr>
         <label>Message: <input type="text" id="messageText" autocomplete="off" /></label>
         <button>Send</button>

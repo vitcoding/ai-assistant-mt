@@ -8,6 +8,7 @@ from fastapi import (
     Query,
     Request,
     WebSocket,
+    WebSocketDisconnect,
     WebSocketException,
     status,
 )
@@ -15,6 +16,7 @@ from fastapi import (
 from core.config import templates
 from core.logger import log
 from services.chat_ai import ChatAI
+from services.websocket_connection import manager
 
 router = APIRouter()
 
@@ -44,16 +46,24 @@ async def websocket_endpoint(
     item_id: str,
     q: int | None = None,
     cookie_or_token: Annotated[str, Depends(get_cookie_or_token)],
+    use_rag: Annotated[bool, Query()],
 ):
     log.info(f"{__name__}: {websocket_endpoint.__name__}: run")
-    await websocket.accept()
+    await manager.connect(websocket)
     chat = ChatAI(item_id)
-    while True:
-        user_message = await websocket.receive_text()
-        user_message_timestamp = datetime.now().isoformat()
-        await websocket.send_text(
-            f"[{user_message_timestamp}] Я: {user_message}"
-        )
-        ai_message = await chat.process(user_message)
-        ai_message_timestamp = datetime.now().isoformat()
-        await websocket.send_text(f"[{ai_message_timestamp}] ИИ: {ai_message}")
+    await websocket.send_text(f"checkbox value: {use_rag}")
+    try:
+        while True:
+            user_message = await websocket.receive_text()
+            user_message_timestamp = datetime.now().isoformat()
+            await websocket.send_text(
+                f"[{user_message_timestamp}] Я: {user_message}"
+            )
+            ai_message = await chat.process(user_message, use_rag)
+            ai_message_timestamp = datetime.now().isoformat()
+            await websocket.send_text(
+                f"[{ai_message_timestamp}] ИИ: {ai_message}"
+            )
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        # await manager.broadcast(f"The chat #{item_id} stopped")

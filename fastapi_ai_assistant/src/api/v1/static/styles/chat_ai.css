@@ -1,0 +1,10 @@
+#checkbox_rag {
+    /* display: flex; */
+    /* align-items: center; */
+    margin-bottom: 10px;
+    margin-left: 5px;
+}
+
+li {
+    color:rgb(15, 15, 110);
+}
