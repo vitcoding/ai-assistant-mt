@@ -8,28 +8,47 @@
 </head>
 
 <body>
-    <h1>WebSocket Chat</h1>
-    <form action="" onsubmit="sendMessage(event)">
+    <section class="chat_header">
+        <div class="wrapper">
+            <div class="header__about">
+                <h1>WebSocket Chat</h1>
+            </div>
+            <div class="header__chat_params">
+                <label>Item ID: <input type="text" id="itemId" autocomplete="off" value="foo" /></label>
+                <label>Token: <input type="text" id="token" autocomplete="off" value="some-key-token" /></label>
+            </div>
 
-        <label>Item ID: <input type="text" id="itemId" autocomplete="off" value="foo" /></label>
-        <label>Token: <input type="text" id="token" autocomplete="off" value="some-key-token" /></label>
-        <button onclick="connect(event)">Connect</button>
+            <div class="header__use_rag">
+                <input type="checkbox" id="checkbox_rag" name="use_rag">
+                <label for="checkbox_rag">Use RAG</label>
+            </div>
+            <button onclick="connect(event)">Connect</button>
+        </div>
+    </section>
 
-        <br>
-        <!-- <label for="checkbox_rag">Check this box</label> -->
-        <!-- <label><input type="checkbox" id="checkbox_rag" name="use_rag">Use RAG</label> -->
-        <input type="checkbox" id="checkbox_rag" name="use_rag">
-        <label for="checkbox_rag">Use RAG</label>
+    <section class="chat_body">
+        <div class="wrapper">
+            <div class="message_items">
+                <ul id='messages'>
+                </ul>
+                <div class="temporary">
+                    <p></p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <hr>
-        <label>Message: <input type="text" id="messageText" autocomplete="off" /></label>
-        <button>Send</button>
-    </form>
-    <ul id='messages'>
-    </ul>
-    <div class="temporary">
-        <p></p>
-    </div>
+    <section class="chat_message">
+        <div class="wrapper">
+            <form action="" onsubmit="sendMessage(event)" class="form_message">
+                <div class="send_message">
+                    <label for="messageText"><B>Message:</B></label>
+                    <textarea id="messageText" autocomplete="off"></textarea>
+                    <button>Send</button>
+                </div>
+            </form>
+        </div>
+    </section>
 
     <script src="/static/js/chat_ai.js"></script>
 </body>
