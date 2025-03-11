@@ -9,6 +9,9 @@
     --color-secondary-1: #153953;
     --color-secondary-2: #24516e;
 }
+h1 {
+    margin: 10px 0px;
+}
 
 body {
     display: flex;
@@ -112,15 +115,15 @@ section {
 }
 .send_message textarea {
     flex-grow: 1;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin: 3px 5px;
     border-radius: 4px;
     border: none;
     outline: none;
     box-shadow: none;
     background: var(--color-white);
     width: 80%;
-    height: 30px;
+    height: 35px;
+    font-size: 14px;
 }
 .send_message button {
     width: 15%;

@@ -28,6 +28,17 @@ function connect(event) {
 }
 
 function appendToTemporary(textContainer, partialMessage) {
+
+    if (textContainer.textContent == "") {
+        const regex = /] (Me|Я):\s*(.*)/;
+        const match = partialMessage.match(regex);
+        if (match && match.length > 0) {
+            textContainer.id = "userMessage"
+        } else {
+            textContainer.id = "aiMessage"
+        }
+
+    }
     textContainer.innerHTML += partialMessage.replace(/\n/g, '<br>');
 
     scrollChat();
@@ -38,16 +49,10 @@ function moveTemporaryToFinal(sourceElement) {
     var messages = document.getElementById('messages');
     var message = document.createElement('div');
 
-    var lastMessage = messages.lastElementChild;
-
-    if (lastMessage && lastMessage.id === 'aiMessage') {
-        message.id = 'userMessage';
-    } else {
-        message.id = 'aiMessage';
-    }
-
+    message.id = sourceElement.id
     message.innerHTML = content;
     messages.appendChild(message);
+    sourceElement.id = "noneMessage";
     sourceElement.textContent = '';
 
     scrollChat();
