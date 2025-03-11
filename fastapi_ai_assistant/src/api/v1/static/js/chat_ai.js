@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("dropdownLanguage").options[0].value;
     var messageButton = document.getElementById('sendMessageButton');
     messageButton.disabled = true;
+    var startRecordButton = document.getElementById('startRecordButton');
+    startRecordButton.disabled = true;
 });
 
 function connect(event) {
@@ -18,6 +20,7 @@ function connect(event) {
     var checkbox_rag = document.getElementById("checkboxRag");
 
     var messageButton = document.getElementById('sendMessageButton');
+    var startRecordButton = document.getElementById('startRecordButton');
 
     ws = new WebSocket(
         "ws://localhost:8005/api/v1/chat_ai/items/" +
@@ -28,6 +31,7 @@ function connect(event) {
         "&use_rag=" + checkbox_rag.checked
     );
     messageButton.disabled = false;
+    startRecordButton.disabled = false;
 
 
     ws.onmessage = function (event) {
@@ -37,9 +41,11 @@ function connect(event) {
 
         if (data === '<<<end>>>') {
             moveTemporaryToFinal(paragraph);
-            messageButton.disabled = false
+            messageButton.disabled = false;
+            startRecordButton.disabled = false;
         } else {
-            messageButton.disabled = true
+            messageButton.disabled = true;
+            startRecordButton.disabled = true;
             appendToTemporary(paragraph, data);
         }
 

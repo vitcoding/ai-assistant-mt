@@ -5,8 +5,10 @@ from fastapi import (
     APIRouter,
     Cookie,
     Depends,
+    File,
     Query,
     Request,
+    UploadFile,
     WebSocket,
     WebSocketDisconnect,
     WebSocketException,
@@ -15,6 +17,7 @@ from fastapi import (
 
 from core.config import templates
 from core.logger import log
+from services.audio_messages import atranscribe_file, transcribe_file
 from services.chat_ai import ChatAI
 from services.languages import LANGUAGES, get_langage_by_index
 from services.models import MODELS, get_model_by_index
@@ -70,6 +73,10 @@ async def websocket_endpoint(
         while True:
             user_message = await websocket.receive_text()
 
+            # audio input
+            if user_message == "<<<audio>>>":
+                user_message = await atranscribe_file()
+
             await chat.send_message(chat.user_role_name, user_message)
 
             ai_message_timestamp = datetime.now().isoformat()
@@ -81,3 +88,13 @@ async def websocket_endpoint(
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+
+@router.post("/upload-audio")
+async def upload_audio(uploaded_audio: UploadFile = File(...)):
+    # save file
+    with open(f"{uploaded_audio.filename}", "wb") as buffer:
+        while contents := uploaded_audio.file.read(1024 * 16):
+            buffer.write(contents)
+
+    return {"filename": uploaded_audio.filename}

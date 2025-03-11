@@ -27,6 +27,12 @@ input {
     color: var(--color-black);
     border-radius: 5px;
 }
+select {
+    border: 0;
+    background: var(--color-white);
+    color: var(--color-black);
+    border-radius: 5px;
+}
 
 button {
     width: 25%;
