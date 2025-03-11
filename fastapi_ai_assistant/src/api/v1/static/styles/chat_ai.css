@@ -1,5 +1,6 @@
 :root {
     --color-black: #1d1e1f;
+    --color-grey: #515152;
     --color-white: #e0e0e0;
     --color-primary-1: #76a7c7;
     --color-primary-2: #92bad4;
@@ -32,7 +33,7 @@ button {
     background: var(--color-secondary-2);
     color: var(--color-white);
     border-radius: 5px;
-    transition: background 0.3s ease;
+    transition: background 0.5s ease;
 }
 button:hover {
     background: var(--color-secondary-1);
@@ -56,7 +57,7 @@ section {
 .chat_header {
     display: flex;
     flex-direction: column;
-    border-bottom: 3px solid var(--color-secondary-1);;
+    border-bottom: 3px solid var(--color-secondary-1);
     background: var(--color-primary-1);
     color: var(--color-secondary-1);
     margin-top: 0;
@@ -72,7 +73,19 @@ section {
     flex-direction: column;
     color: var(--color-black);
 }
+#userMessage, #aiMessage {
+    border: 1px solid var(--color-primary-1);
+    border-radius: 10px;
+    padding: 10px;
+    margin: 5px 0px;
+}
+#userMessage {
+    margin-left: 20px;
+    border-color: var(--color-grey);
+    color: var(--color-grey);
+}
 #aiMessage {
+    margin-right: 20px;
     color: var(--color-secondary-1);
 }
 .message_items {

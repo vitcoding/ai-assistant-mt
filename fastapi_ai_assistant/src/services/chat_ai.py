@@ -180,7 +180,7 @@ class ChatAI:
         """Sends a message to the chat."""
 
         timestamp = datetime.now().isoformat()
-        await self.websocket.send_text(f"[{timestamp}] {role}: {message}")
+        await self.websocket.send_text(f"[{timestamp}] {role}: \n{message}")
         await self.websocket.send_text("<<<end>>>")
         log.info(
             f"{__name__}: {self.process.__name__}: chat message:"

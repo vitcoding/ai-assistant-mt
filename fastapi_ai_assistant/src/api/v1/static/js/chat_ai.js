@@ -1,9 +1,9 @@
 var ws = null;
 function connect(event) {
 
-    var itemId = document.getElementById("itemId")
-    var token = document.getElementById("token")
-    var checkbox_rag = document.getElementById("checkbox_rag")
+    var itemId = document.getElementById("itemId");
+    var token = document.getElementById("token");
+    var checkbox_rag = document.getElementById("checkbox_rag");
 
     ws = new WebSocket(
         "ws://localhost:8005/api/v1/chat_ai/items/" +
@@ -15,7 +15,7 @@ function connect(event) {
     ws.onmessage = function (event) {
         const data = event.data;
         const chunksElement = document.getElementsByClassName('temporary')[0];
-        const paragraph = chunksElement.querySelector('p');
+        const paragraph = chunksElement.querySelector('div');
 
         if (data === '<<<end>>>') {
             moveTemporaryToFinal(paragraph);
@@ -24,21 +24,19 @@ function connect(event) {
         }
 
     };
-    event.preventDefault()
+    event.preventDefault();
 }
 
 function appendToTemporary(textContainer, partialMessage) {
-    var content = document.createTextNode(partialMessage)
-    textContainer.appendChild(content)
+    textContainer.innerHTML += partialMessage.replace(/\n/g, '<br>');
 
-    const chatBody = document.querySelector(".chat_body");
-    chatBody.scrollTop = chatBody.scrollHeight;
+    scrollChat();
 }
 
 function moveTemporaryToFinal(sourceElement) {
-    const text = sourceElement.textContent;
-    var messages = document.getElementById('messages')
-    var message = document.createElement('div')
+    const content = sourceElement.innerHTML;
+    var messages = document.getElementById('messages');
+    var message = document.createElement('div');
 
     var lastMessage = messages.lastElementChild;
 
@@ -48,15 +46,21 @@ function moveTemporaryToFinal(sourceElement) {
         message.id = 'aiMessage';
     }
 
-    message.textContent = text;
-    messages.appendChild(message)
+    message.innerHTML = content;
+    messages.appendChild(message);
     sourceElement.textContent = '';
+
+    scrollChat();
 }
 
-
 function sendMessage(event) {
-    var input = document.getElementById("messageText")
-    ws.send(input.value)
-    input.value = ''
-    event.preventDefault()
+    var input = document.getElementById("messageText");
+    ws.send(input.value);
+    input.value = '';
+    event.preventDefault();
+}
+
+function scrollChat() {
+    const chatBody = document.querySelector(".chat_body");
+    chatBody.scrollTop = chatBody.scrollHeight;
 }

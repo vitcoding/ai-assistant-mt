@@ -63,7 +63,7 @@ async def websocket_endpoint(
 
             ai_message_timestamp = datetime.now().isoformat()
             await websocket.send_text(
-                f"[{ai_message_timestamp}] {chat.ai_role_name}: "
+                f"[{ai_message_timestamp}] {chat.ai_role_name}: \n"
             )
             async for chunk in chat.process(user_message, use_rag):
                 await websocket.send_text(chunk)
