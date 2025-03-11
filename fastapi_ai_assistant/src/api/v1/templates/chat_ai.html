@@ -62,11 +62,22 @@
                     <textarea id="messageText" autocomplete="off"></textarea>
                     <button id="sendMessageButton">Отправить</button>
                 </div>
+                <div class="audio_message">
+                    <h3>Запись Голоса</h3>
+                    <button id="recordButton" onclick="startRecording()">Начать Запись</button>
+
+                    <button id="stopButton" onclick="stopRecording()" disabled>Остановить Запись</button>
+
+                    <!-- <button id="stopButton" onclick="stopRecording()">Остановить Запись</button> -->
+
+                    <a id="downloadLink" download="recorded-audio.wav"></a>
+                </div>
             </form>
         </div>
     </section>
 
-    <script src="/static/js/chat_ai.js"></script>
+    <script type="module" src="/static/js/chat_ai.js"></script>
+    <script type="module" src="/static/js/audio_message.js"></script>
 </body>
 
 </html>
