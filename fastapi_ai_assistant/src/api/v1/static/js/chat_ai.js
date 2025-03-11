@@ -38,11 +38,18 @@ function appendToTemporary(textContainer, partialMessage) {
 function moveTemporaryToFinal(sourceElement) {
     const text = sourceElement.textContent;
     var messages = document.getElementById('messages')
-    var message = document.createElement('li')
-    var content = document.createTextNode(text)
-    message.appendChild(content)
+    var message = document.createElement('div')
+
+    var lastMessage = messages.lastElementChild;
+
+    if (lastMessage && lastMessage.id === 'aiMessage') {
+        message.id = 'userMessage';
+    } else {
+        message.id = 'aiMessage';
+    }
+
+    message.textContent = text;
     messages.appendChild(message)
-    const textNode = document.createTextNode('Новый текст');
     sourceElement.textContent = '';
 }
 

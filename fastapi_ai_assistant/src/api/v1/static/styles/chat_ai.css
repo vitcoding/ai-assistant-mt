@@ -67,6 +67,14 @@ section {
     background: var(--color-primary-4);
     overflow-y: scroll;
 }
+#messages {
+    display: flex;
+    flex-direction: column;
+    color: var(--color-black);
+}
+#aiMessage {
+    color: var(--color-secondary-1);
+}
 .message_items {
     display: flex;
     flex-direction: column;
@@ -109,10 +117,6 @@ section {
 #checkbox_rag {
     margin-bottom: 10px;
     margin-left: 5px;
-}
-
-li {
-    color: var(--color-black);
 }
 
 .temporary {
