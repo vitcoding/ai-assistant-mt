@@ -1,9 +1,17 @@
 var ws = null;
+
+document.addEventListener('DOMContentLoaded', function () {
+    var messageButton = document.getElementById('sendMessageButton');
+    messageButton.disabled = true;
+});
+
 function connect(event) {
 
     var itemId = document.getElementById("itemId");
     var token = document.getElementById("token");
     var checkbox_rag = document.getElementById("checkbox_rag");
+
+    var messageButton = document.getElementById('sendMessageButton');
 
     ws = new WebSocket(
         "ws://localhost:8005/api/v1/chat_ai/items/" +
@@ -11,6 +19,8 @@ function connect(event) {
         "/ws?token=" + token.value +
         "&use_rag=" + checkbox_rag.checked
     );
+    messageButton.disabled = false;
+
 
     ws.onmessage = function (event) {
         const data = event.data;
@@ -19,7 +29,9 @@ function connect(event) {
 
         if (data === '<<<end>>>') {
             moveTemporaryToFinal(paragraph);
+            messageButton.disabled = false
         } else {
+            messageButton.disabled = true
             appendToTemporary(paragraph, data);
         }
 
