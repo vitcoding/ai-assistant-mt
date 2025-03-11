@@ -65,6 +65,7 @@ section {
 .chat_body {
     flex-grow: 1;
     background: var(--color-primary-4);
+    overflow-y: scroll;
 }
 .message_items {
     display: flex;

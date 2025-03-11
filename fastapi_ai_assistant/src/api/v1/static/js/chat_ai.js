@@ -31,9 +31,8 @@ function appendToTemporary(textContainer, partialMessage) {
     var content = document.createTextNode(partialMessage)
     textContainer.appendChild(content)
 
-    const documentHeight = document.documentElement.scrollHeight;
-    const windowHeight = window.innerHeight;
-    window.scrollTo(0, documentHeight - windowHeight);
+    const chatBody = document.querySelector(".chat_body");
+    chatBody.scrollTop = chatBody.scrollHeight;
 }
 
 function moveTemporaryToFinal(sourceElement) {
