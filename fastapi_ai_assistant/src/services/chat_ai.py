@@ -20,7 +20,7 @@ CHROMA_COLLECTION_NAME = "films_mt"
 # CHROMA_COLLECTION_NAME = "example_langchain"
 
 # LLM
-MODEL_NAME = config.llm.model
+# MODEL_NAME = config.llm.model
 PROVIDER = config.llm.provider
 MODEL_KWARGS = {
     "keep_alive": 300,
@@ -70,14 +70,21 @@ class ChatAI:
     """A class for working with AI chat."""
 
     def __init__(
-        self, chat_id: str, websocket: WebSocket, language: str = "Russian"
+        self,
+        chat_id: str,
+        websocket: WebSocket,
+        model_name: str,
+        language: str,
+        use_rag: bool,
     ) -> None:
+        self.model_name = model_name
         self.language = language
+        self.use_rag = use_rag
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()
         self.chat_start_timestamp = datetime.now(timezone.utc).isoformat()
         self.llm = init_chat_model(
-            model=MODEL_NAME, model_provider=PROVIDER, **MODEL_KWARGS
+            model=self.model_name, model_provider=PROVIDER, **MODEL_KWARGS
         )
         self.trimmer = trim_messages(
             max_tokens=CHAT_MAX_TOKENS,
@@ -97,6 +104,19 @@ class ChatAI:
         """The chat workfow settings."""
 
         log.debug(f"{__name__}: {self._set_workflow.__name__}: start")
+
+        log.info(
+            f"{__name__}: {self._set_workflow.__name__}: "
+            f"\nmodel setted: {self.model_name}"
+        )
+        log.info(
+            f"{__name__}: {self._set_workflow.__name__}: "
+            f"\nanswer languge setted: {self.language}"
+        )
+        log.info(
+            f"{__name__}: {self._set_workflow.__name__}: "
+            f"\nuse_rag setted: {self.use_rag}"
+        )
 
         self.graph_builder.add_edge(START, "model")
         self.graph_builder.add_node("model", self._call_model)
@@ -187,9 +207,7 @@ class ChatAI:
             f"\n{role}: \n'''\n{message}\n'''"
         )
 
-    async def process(
-        self, input_message: str, use_rag: bool
-    ) -> AsyncGenerator:
+    async def process(self, input_message: str) -> AsyncGenerator:
         """Processes user messages."""
 
         log.debug(f"{__name__}: {self.process.__name__}: start")
@@ -211,7 +229,7 @@ class ChatAI:
         else:
             # docs content
             docs = ""
-            if use_rag:
+            if self.use_rag:
                 docs = await self.get_docs(input_message)
             if isinstance(docs, (list, tuple)):
                 docs_content = "\n\n".join(doc for doc in docs)

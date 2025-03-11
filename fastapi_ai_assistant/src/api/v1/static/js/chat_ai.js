@@ -1,6 +1,10 @@
 var ws = null;
 
 document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById("dropdownLanguage").value =
+        document.getElementById("dropdownLanguage").options[0].value;
+    document.getElementById("dropdownModel").value =
+        document.getElementById("dropdownLanguage").options[0].value;
     var messageButton = document.getElementById('sendMessageButton');
     messageButton.disabled = true;
 });
@@ -9,7 +13,9 @@ function connect(event) {
 
     var itemId = document.getElementById("itemId");
     var token = document.getElementById("token");
-    var checkbox_rag = document.getElementById("checkbox_rag");
+    var model_index = document.getElementById("dropdownModel");
+    var language_index = document.getElementById("dropdownLanguage");
+    var checkbox_rag = document.getElementById("checkboxRag");
 
     var messageButton = document.getElementById('sendMessageButton');
 
@@ -17,6 +23,8 @@ function connect(event) {
         "ws://localhost:8005/api/v1/chat_ai/items/" +
         itemId.value +
         "/ws?token=" + token.value +
+        "&model_index=" + model_index.value +
+        "&language_index=" + language_index.value +
         "&use_rag=" + checkbox_rag.checked
     );
     messageButton.disabled = false;

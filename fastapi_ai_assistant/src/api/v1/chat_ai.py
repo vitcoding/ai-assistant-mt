@@ -16,6 +16,8 @@ from fastapi import (
 from core.config import templates
 from core.logger import log
 from services.chat_ai import ChatAI
+from services.languages import LANGUAGES, get_langage_by_index
+from services.models import MODELS, get_model_by_index
 from services.websocket_connection import manager
 
 router = APIRouter()
@@ -25,7 +27,11 @@ router = APIRouter()
 @router.get("/")
 async def get(request: Request):
     log.debug(f"{__name__}: {get.__name__}: run")
-    return templates.TemplateResponse(request, "chat_ai.html")
+    return templates.TemplateResponse(
+        request,
+        "chat_ai.html",
+        context={"models": MODELS, "languages": LANGUAGES},
+    )
 
 
 async def get_cookie_or_token(
@@ -46,14 +52,19 @@ async def websocket_endpoint(
     item_id: str,
     q: int | None = None,
     cookie_or_token: Annotated[str, Depends(get_cookie_or_token)],
+    model_index: Annotated[int, Query()],
+    language_index: Annotated[int, Query()],
     use_rag: Annotated[bool, Query()],
 ):
     log.debug(f"{__name__}: {websocket_endpoint.__name__}: run")
 
+    model_name = get_model_by_index(model_index - 1)
+    language = get_langage_by_index(language_index - 1)
     await manager.connect(websocket)
-    chat = ChatAI(item_id, websocket)
+    chat = ChatAI(item_id, websocket, model_name, language, use_rag)
 
-    await chat.send_message("System", f"Использование RAG '{use_rag}'.")
+    # for debug
+    # await chat.send_message("System", f"Использование RAG '{use_rag}'.")
 
     try:
         while True:
@@ -65,7 +76,7 @@ async def websocket_endpoint(
             await websocket.send_text(
                 f"[{ai_message_timestamp}] {chat.ai_role_name}: \n"
             )
-            async for chunk in chat.process(user_message, use_rag):
+            async for chunk in chat.process(user_message):
                 await websocket.send_text(chunk)
 
     except WebSocketDisconnect:
