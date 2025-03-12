@@ -1,13 +1,15 @@
 let recorder, chunks = [];
 
-// document.getElementById('recordButton').addEventListener('mousedown', startRecording);
-// document.getElementById('recordButton').addEventListener('touchstart', startRecording);
-// document.getElementById('recordButton').addEventListener('mouseup', stopRecording);
-// document.getElementById('recordButton').addEventListener('touchend', stopRecording);
+document.getElementById('recordButton').addEventListener('mousedown', startRecording);
+document.getElementById('recordButton').addEventListener('touchstart', startRecording);
+document.getElementById('recordButton').addEventListener('mouseup', stopRecording);
+document.getElementById('recordButton').addEventListener('touchend', stopRecording);
 
 
 async function startRecording() {
     try {
+        // console.log("Start recording.")
+
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         recorder = new MediaRecorder(stream);
 
@@ -39,32 +41,28 @@ async function startRecording() {
                 }
                 return response.json();
             }).then(data => {
-                console.log('Файл успешно передан!', data);
+                console.log('File sent!', data);
                 // send info about an audio message
                 ws.send("<<<audio>>>");
             }).catch(error => {
-                console.error('Ошибка при передаче файла:', error);
+                console.error('File transfer error:', error);
             });
-
-
         };
 
         recorder.start();
 
         document.getElementById('sendMessageButton').disabled = true;
-        document.getElementById('startRecordButton').disabled = true;
-        document.getElementById('stopRecordButton').disabled = false;
     } catch (error) {
-        console.error('Ошибка при попытке начать запись:', error);
+        console.error('Error when trying to start recording:', error);
     }
 }
 
 function stopRecording() {
+    // console.log("Stop recording.")
     if (recorder && recorder.state !== 'inactive') {
         // console.log(recorder.state)
         recorder.stop();
         // console.log(recorder.state)
-
-        document.getElementById('stopRecordButton').disabled = true;
     }
+    document.getElementById('recordButton').disabled = true;
 }
