@@ -47,6 +47,9 @@ async function startRecording() {
             }).catch(error => {
                 console.error('File transfer error:', error);
             });
+
+            // turn off the microphone
+            stream.getTracks().forEach(track => track.stop());
         };
 
         recorder.start();
@@ -62,6 +65,7 @@ function stopRecording() {
     if (recorder && recorder.state !== 'inactive') {
         // console.log(recorder.state)
         recorder.stop();
+        recorder.disabled
         // console.log(recorder.state)
     }
     document.getElementById('recordButton').disabled = true;
