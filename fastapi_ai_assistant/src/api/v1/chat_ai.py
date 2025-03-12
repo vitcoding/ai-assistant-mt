@@ -17,10 +17,10 @@ from fastapi import (
 
 from core.config import templates
 from core.logger import log
-from services.audio_messages import atranscribe_file, transcribe_file
+from services.audio.speech_to_text import SpeechToText
 from services.chat_ai import ChatAI
-from services.languages import LANGUAGES, get_langage_by_index
-from services.models import MODELS, get_model_by_index
+from services.llm_languages import LANGUAGES, get_langage_by_index
+from services.llm_models import MODELS, get_model_by_index
 from services.websocket_connection import manager
 
 router = APIRouter()
@@ -65,6 +65,7 @@ async def websocket_endpoint(
     language = get_langage_by_index(language_index - 1)
     await manager.connect(websocket)
     chat = ChatAI(item_id, websocket, model_name, language, use_rag)
+    stt = SpeechToText()
 
     # for debug
     # await chat.send_message("System", f"Использование RAG '{use_rag}'.")
@@ -75,7 +76,7 @@ async def websocket_endpoint(
 
             # audio input
             if user_message == "<<<audio>>>":
-                user_message = await atranscribe_file()
+                user_message = await stt.transcribe_audio()
 
             await chat.send_message(chat.user_role_name, user_message)
 
