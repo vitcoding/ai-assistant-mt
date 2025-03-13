@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
     messageButton.disabled = true;
     var startRecordButton = document.getElementById('recordButton');
     startRecordButton.disabled = true;
+
+    // const stream = navigator.mediaDevices.getUserMedia({ audio: true });
 });
 
 async function connect(event) {
