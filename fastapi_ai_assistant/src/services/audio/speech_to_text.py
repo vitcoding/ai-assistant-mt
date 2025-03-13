@@ -21,7 +21,13 @@ class SpeechToText:
     ) -> str:
         """Transcribes an audio file."""
 
+        log.info(
+            f"{__name__}: {self.transcribe_audio.__name__}: Model started"
+        )
         segments, info = self.model.transcribe(file_path, beam_size=5)
+        log.info(
+            f"{__name__}: {self.transcribe_audio.__name__}: Model finished"
+        )
 
         log.info(
             f"{__name__}: {self.transcribe_audio.__name__}: "
