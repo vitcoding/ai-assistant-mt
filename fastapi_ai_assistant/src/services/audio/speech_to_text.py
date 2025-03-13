@@ -5,6 +5,8 @@ from core.logger import log
 
 
 class SpeechToText:
+    """A class for work with the stt model."""
+
     def __init__(self, model_size: str = "small") -> None:
         self.model_size = model_size
         self.model = WhisperModel(

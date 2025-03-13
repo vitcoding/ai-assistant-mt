@@ -18,7 +18,7 @@ class TextToSpeechEn:
     def text_to_audio(
         self,
         text: str,
-        split_pattern: str | None = None,
+        split_pattern: str | None = r"(\n\n)+",
     ) -> None:
         """Converts text to audio."""
 
@@ -33,10 +33,11 @@ class TextToSpeechEn:
 
         log.info(f"{__name__}: {self.text_to_audio.__name__}: Model finished")
 
+        tensors = []
         for i, (gs, ps, audio) in enumerate(generator):
             log.debug(
                 f"{__name__}: {self.text_to_audio.__name__}: tts_data:"
                 f"\nindex: {i}\ngraphemes/text: {gs}\nphonemes: {ps}"
             )
-
-            self.audio_editor.save_audio(audio, "output.wav")
+            tensors.append(audio)
+            self.audio_editor.save_audio_from_tensors(tensors, "output.wav")
