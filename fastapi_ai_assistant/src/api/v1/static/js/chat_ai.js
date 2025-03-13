@@ -10,8 +10,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var startRecordButton = document.getElementById('recordButton');
     startRecordButton.disabled = true;
 
-    // const stream = navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = navigator.mediaDevices.getUserMedia({ audio: true });
 });
+
+function toggleMenu() {
+    var menuContent = document.getElementById("menuContent");
+
+    if (menuContent.classList.contains("expanded")) {
+        menuContent.classList.remove("expanded");
+        menuContent.classList.add("collapsed");
+    } else {
+        menuContent.classList.remove("collapsed");
+        menuContent.classList.add("expanded");
+    }
+}
 
 async function connect(event) {
 
@@ -34,6 +46,9 @@ async function connect(event) {
         "&use_rag=" + checkbox_rag.checked +
         "&use_sound=" + checkbox_sound.checked
     );
+
+    toggleMenu()
+
     messageButton.disabled = false;
     recordButton.disabled = false;
 

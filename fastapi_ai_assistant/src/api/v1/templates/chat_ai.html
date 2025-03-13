@@ -11,14 +11,15 @@
     <section class="chat_header">
         <div class="wrapper">
             <div class="header__about">
+                <img src="/static/images/chat/menu_main.svg" alt="Меню" class="icon_menu" onclick="toggleMenu()">
                 <h1>Чат с ИИ Ассистентом</h1>
             </div>
-            <div class="header__parameters" id="parameter">
-                <div class="header__chat_params">
+            <div class="header__parameters expanded" id="menuContent">
+                <div class="header__chat_params" id="parameters">
                     <label>Item ID: <input type="text" id="itemId" autocomplete="off" value="foo" /></label>
                     <label>Token: <input type="text" id="token" autocomplete="off" value="some-key-token" /></label>
                 </div>
-                <div class="header__model" id="parameter">
+                <div class="header__model" id="parameters">
                     <select id="dropdownModel">
                         {% for item in models %}
                         <option value="{{ loop.index }}" {% if loop.first %}selected{% endif %}>{{ item }}</option>
@@ -26,7 +27,7 @@
                     </select>
                     <label for="dropdown"> - LLM модель</label>
                 </div>
-                <div class="header__language" id="parameter">
+                <div class="header__language" id="parameters">
                     <select id="dropdownLanguage">
                         {% for item in languages %}
                         <option value="{{ loop.index }}" {% if loop.first %}selected{% endif %}>{{ item }}</option>
@@ -35,17 +36,17 @@
                     <label for="dropdown"> - язык, на котором будет отвечать ассистент</label>
                 </div>
                 <div class="header__checkbox_rag_sound">
-                    <div class="header__use_rag" id="parameter">
+                    <div class="header__use_rag" id="parameters">
                         <input type="checkbox" id="checkboxRag" name="use_rag">
                         <label for="checkboxRag"> - использовать RAG</label>
                     </div>
-                    <div class="header__use_sound" id="parameter">
+                    <div class="header__use_sound" id="parameters">
                         <input type="checkbox" id="checkboxSound" name="use_sound" checked>
                         <label for="checkboxSound"> - озвучивать сообщения ИИ</label>
                     </div>
                 </div>
+                <button onclick="connect(event)" id="connectButton">Начать новый чат</button>
             </div>
-            <button onclick="connect(event)">Начать новый чат</button>
         </div>
     </section>
 
