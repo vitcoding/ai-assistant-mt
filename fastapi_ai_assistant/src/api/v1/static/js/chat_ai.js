@@ -20,6 +20,7 @@ async function connect(event) {
     var model_index = document.getElementById("dropdownModel");
     var language_index = document.getElementById("dropdownLanguage");
     var checkbox_rag = document.getElementById("checkboxRag");
+    var checkbox_sound = document.getElementById("checkboxSound");
 
     var messageButton = document.getElementById('sendMessageButton');
     var recordButton = document.getElementById('recordButton');
@@ -30,7 +31,8 @@ async function connect(event) {
         "/ws?token=" + token.value +
         "&model_index=" + model_index.value +
         "&language_index=" + language_index.value +
-        "&use_rag=" + checkbox_rag.checked
+        "&use_rag=" + checkbox_rag.checked +
+        "&use_sound=" + checkbox_sound.checked
     );
     messageButton.disabled = false;
     recordButton.disabled = false;
@@ -42,7 +44,7 @@ async function connect(event) {
         const paragraph = chunksElement.querySelector('div');
 
         if (data === '<<<end>>>') {
-            if (paragraph.id === 'aiMessage') {
+            if (paragraph.id === 'aiMessage' && checkbox_sound.checked === true) {
                 fetchAndPlayWav("output");
             }
             moveTemporaryToFinal(paragraph);

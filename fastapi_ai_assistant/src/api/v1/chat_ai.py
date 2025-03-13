@@ -63,13 +63,14 @@ async def websocket_endpoint(
     model_index: Annotated[int, Query()],
     language_index: Annotated[int, Query()],
     use_rag: Annotated[bool, Query()],
+    use_sound: Annotated[bool, Query()],
 ):
     log.debug(f"{__name__}: {websocket_endpoint.__name__}: run")
 
     model_name = get_model_by_index(model_index - 1)
     language = get_langage_by_index(language_index - 1)
     await manager.connect(websocket)
-    chat = ChatAI(item_id, websocket, model_name, language, use_rag)
+    chat = ChatAI(item_id, websocket, model_name, language, use_rag, use_sound)
     stt = SpeechToText()
 
     # for debug

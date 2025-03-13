@@ -34,10 +34,15 @@
                     </select>
                     <label for="dropdown"> - язык, на котором будет отвечать ассистент</label>
                 </div>
-
-                <div class="header__use_rag" id="parameter">
-                    <input type="checkbox" id="checkboxRag" name="use_rag">
-                    <label for="checkboxRag"> - использовать RAG</label>
+                <div class="header__checkbox_rag_sound">
+                    <div class="header__use_rag" id="parameter">
+                        <input type="checkbox" id="checkboxRag" name="use_rag">
+                        <label for="checkboxRag"> - использовать RAG</label>
+                    </div>
+                    <div class="header__use_sound" id="parameter">
+                        <input type="checkbox" id="checkboxSound" name="use_sound" checked>
+                        <label for="checkboxSound"> - озвучивать сообщения ИИ</label>
+                    </div>
                 </div>
             </div>
             <button onclick="connect(event)">Начать новый чат</button>

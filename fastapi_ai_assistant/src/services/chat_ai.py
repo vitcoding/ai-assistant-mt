@@ -79,10 +79,12 @@ class ChatAI:
         model_name: str,
         language: str,
         use_rag: bool,
+        use_sound: bool,
     ) -> None:
         self.model_name = model_name
         self.language = language
         self.use_rag = use_rag
+        self.use_sound = use_sound
         self.speaker = None
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()
@@ -122,7 +124,9 @@ class ChatAI:
             f"\nuse_rag setted: {self.use_rag}"
         )
 
-        if self.language == "Russian":
+        if not self.use_sound:
+            self.speaker = None
+        elif self.language == "Russian":
             self.speaker = TextToSpeechRu()
         elif self.language == "English":
             self.speaker = TextToSpeechEn()
