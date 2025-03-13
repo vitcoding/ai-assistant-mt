@@ -1,11 +1,15 @@
 from datetime import datetime
+import os
 from typing import Annotated
 
+import aiofiles
 from fastapi import (
     APIRouter,
     Cookie,
     Depends,
     File,
+    HTTPException,
+    Path,
     Query,
     Request,
     UploadFile,
@@ -14,6 +18,7 @@ from fastapi import (
     WebSocketException,
     status,
 )
+from fastapi.responses import FileResponse
 
 from core.config import templates
 from core.logger import log
@@ -93,9 +98,27 @@ async def websocket_endpoint(
 
 @router.post("/upload-audio")
 async def upload_audio(uploaded_audio: UploadFile = File(...)):
-    # save file
+
     with open(f"{uploaded_audio.filename}", "wb") as buffer:
         while contents := uploaded_audio.file.read(1024 * 16):
             buffer.write(contents)
 
     return {"filename": uploaded_audio.filename}
+
+
+@router.get("/wav/{file_id}")
+async def get_wav(file_id: str = Path(...)):
+
+    log.info(f"file_id: {file_id}")
+    filename = f"{file_id}.wav"
+
+    if not os.path.exists(filename):
+        raise HTTPException(
+            status_code=404, detail=f"File {filename} not found"
+        )
+
+    return FileResponse(
+        path=filename,
+        media_type="audio/wav",
+        headers={"Content-Disposition": f"attachment; filename={file_id}.wav"},
+    )

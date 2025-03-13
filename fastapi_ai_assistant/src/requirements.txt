@@ -17,3 +17,12 @@ python-multipart==0.0.20
 
 faster-whisper==1.1.1
 
+# apt-get -qq -y install espeak-ng > /dev/null 2>&1
+kokoro==0.8.4
+pydub==0.25.1
+
+transliterate==1.10.2
+# sudo apt update
+# sudo apt install libasound2-dev
+
+aiofiles==24.1.0

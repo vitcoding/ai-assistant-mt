@@ -14,6 +14,9 @@ from typing_extensions import Annotated, TypedDict
 from core.config import config
 from core.logger import log
 from db.vector_db import get_vector_db_client
+from services.audio.text_to_speech.en_tts import TextToSpeechEn
+from services.audio.text_to_speech.ru_tts import TextToSpeechRu
+from services.audio.text_to_speech.tts_speak import speak
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "films_mt"
@@ -80,6 +83,7 @@ class ChatAI:
         self.model_name = model_name
         self.language = language
         self.use_rag = use_rag
+        self.speaker = None
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()
         self.chat_start_timestamp = datetime.now(timezone.utc).isoformat()
@@ -117,6 +121,11 @@ class ChatAI:
             f"{__name__}: {self._set_workflow.__name__}: "
             f"\nuse_rag setted: {self.use_rag}"
         )
+
+        if self.language == "Russian":
+            self.speaker = TextToSpeechRu()
+        elif self.language == "English":
+            self.speaker = TextToSpeechEn()
 
         self.graph_builder.add_edge(START, "model")
         self.graph_builder.add_node("model", self._call_model)
@@ -254,9 +263,13 @@ class ChatAI:
                 message_chunk = chunc_data[0].content
                 message_list.append(message_chunk)
                 yield message_chunk
-            yield "<<<end>>>"
 
             ai_message = "".join(message_list) if message_list else ""
+
+            if self.speaker:
+                await speak(self.speaker, ai_message)
+
+            yield "<<<end>>>"
 
             log.info(
                 f"{__name__}: {self.process.__name__}: chat message:"

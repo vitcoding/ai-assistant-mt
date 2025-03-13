@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
     startRecordButton.disabled = true;
 });
 
-function connect(event) {
+async function connect(event) {
 
     var itemId = document.getElementById("itemId");
     var token = document.getElementById("token");
@@ -40,9 +40,13 @@ function connect(event) {
         const paragraph = chunksElement.querySelector('div');
 
         if (data === '<<<end>>>') {
+            if (paragraph.id === 'aiMessage') {
+                fetchAndPlayWav("output");
+            }
             moveTemporaryToFinal(paragraph);
             messageButton.disabled = false;
             recordButton.disabled = false;
+
         } else {
             messageButton.disabled = true;
             recordButton.disabled = true;
