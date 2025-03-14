@@ -1,15 +1,27 @@
 import logging
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
+from redis.asyncio import Redis
 
 from api import router
 from core.config import config
 from core.logger import LOGGING
+from db import redis
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    redis.redis = Redis(host=config.cache.host, port=config.cache.port)
+    yield
+    await redis.redis.close()
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title=config.globals.project_name,
     docs_url="/api/openapi",
     openapi_url="/api/openapi.json",

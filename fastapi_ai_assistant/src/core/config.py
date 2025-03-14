@@ -58,6 +58,16 @@ class VectorDB(BaseSettings):
         env_prefix = "CHROMA_"
 
 
+class CacheConfig(BaseSettings):
+    """Configuration settings for the cache storage."""
+
+    host: str = Field(default="127.0.0.1")
+    port: int = Field(default=6379)
+
+    class Config:
+        env_prefix = "REDIS_"
+
+
 class UrlConfig(BaseSettings):
     search: str = Field(default="http://0.0.0.0:8000")
 
@@ -67,7 +77,8 @@ class UrlConfig(BaseSettings):
 
 class AuthConfig(BaseSettings):
     """
-    Authentication configuration settings, including secret key, algorithm, and login URL.
+    Authentication configuration settings, including secret key, algorithm,
+    and login URL.
     """
 
     secret_key: str = Field(default="gPaFf9ldf-8lgUFePhe", env="SECRET_KEY")
@@ -88,6 +99,7 @@ class Config(BaseSettings):
     gpt: GPTConfig = GPTConfig()
     llm: LLMModelConfig = LLMModelConfig()
     vector_db: VectorDB = VectorDB()
+    cache: CacheConfig = CacheConfig()
     url: UrlConfig = UrlConfig()
     auth: AuthConfig = AuthConfig()
 
