@@ -49,7 +49,7 @@ class TextToSpeechRu:
             f"\nText after translit and num2words: {words}"
         )
 
-        example_text = f"{words}"
+        text_to_speak = f"{' '*5}{words}"
         if sample_rate not in [48000, 24000, 8000]:
             sample_rate = 24000
         if speaker not in [
@@ -66,7 +66,7 @@ class TextToSpeechRu:
 
         try:
             audio = self.__model.apply_tts(
-                text=example_text,
+                text=text_to_speak,
                 speaker=speaker,
                 sample_rate=sample_rate,
             )

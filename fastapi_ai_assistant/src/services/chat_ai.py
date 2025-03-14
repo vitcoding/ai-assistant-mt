@@ -237,10 +237,12 @@ class ChatAI:
 
         log.debug(f"{__name__}: {self.process.__name__}: start")
 
-        if not input_message:
+        if not input_message.strip():
             response_no_input = {
-                "Russian": "Вы ничего не ввели, напишите что-нибудь.",
-                "English": "You haven't entered anything, write something.",
+                "Russian": "Вы ничего не ввели, "
+                + "скажите или напишите что-нибудь.",
+                "English": "You haven't entered anything, "
+                + "tell or write something.",
             }
             system_message = (
                 response_no_input[self.language]
@@ -248,6 +250,11 @@ class ChatAI:
                 else response_no_input["English"]
             )
             yield system_message
+            if self.speaker:
+                file_path = (
+                    f"{self.path_manager.chat_dir_audio}{ai_file_name}.wav"
+                )
+                await speak(self.speaker, system_message, file_path)
             yield "<<<end>>>"
 
             log.debug(f"{__name__}: {self.process.__name__}: end (no input)")

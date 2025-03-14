@@ -36,6 +36,8 @@ class SpeechToText:
             f"\nDetected language '{info.language}' "
             f"with probability {info.language_probability}"
         )
+        if info.language == "nn":
+            return "   "
 
         segments_data = [segment for segment in segments]
         chunks = [segment.text for segment in segments_data]
