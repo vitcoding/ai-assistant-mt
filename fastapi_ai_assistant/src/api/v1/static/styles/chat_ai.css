@@ -124,10 +124,12 @@ section {
 }
 .header__chat_params {
     display: flex;
-    flex-direction: row;
-    justify-content: space-around;
+    flex-direction: column;
     margin-top: 10px;
     padding-top: 15px;
+}
+.header__chat_params label {
+    font-size: 16px;
 }
 .header__checkbox_rag_sound {
     display: flex;

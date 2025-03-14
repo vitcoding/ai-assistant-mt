@@ -70,17 +70,21 @@ class State(TypedDict):
 
 
 class ChatAI:
-    """A class for working with AI chat."""
+    """A class for work with AI chat."""
 
     def __init__(
         self,
-        chat_id: str,
         websocket: WebSocket,
+        chat_id: str,
+        chat_topic: str,
         model_name: str,
         language: str,
         use_rag: bool,
         use_sound: bool,
     ) -> None:
+        self.websocket = websocket
+        self.chat_id = chat_id
+        self.chat_topic = chat_topic
         self.model_name = model_name
         self.language = language
         self.use_rag = use_rag
@@ -102,9 +106,8 @@ class ChatAI:
         )
         self.graph_builder = StateGraph(state_schema=State)
         self.memory = MemorySaver()
-        self.chat_config = {"configurable": {"thread_id": chat_id}}
+        self.chat_config = {"configurable": {"thread_id": self.chat_id}}
         self.graph = self._set_workflow()
-        self.websocket = websocket
 
     def _set_workflow(self) -> StateGraph:
         """The chat workfow settings."""

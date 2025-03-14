@@ -16,8 +16,8 @@
             </div>
             <div class="header__parameters expanded" id="menuContent">
                 <div class="header__chat_params" id="parameters">
-                    <label>Item ID: <input type="text" id="itemId" autocomplete="off" value="foo" /></label>
-                    <label>Token: <input type="text" id="token" autocomplete="off" value="some-key-token" /></label>
+                    <label>Chat ID: {{ item_id }}</label>
+                    <label>Chat topic: <input type="text" id="chatTopic" autocomplete="off" value="default" /></label>
                 </div>
                 <div class="header__model" id="parameters">
                     <select id="dropdownModel">
@@ -76,6 +76,9 @@
         </div>
     </section>
 
+    <script>
+        const itemId = "{{ item_id }}";
+    </script>
     <script src="/static/js/chat_ai.js"></script>
     <script src="/static/js/audio_message.js"></script>
     <script src="/static/js/audio_play.js"></script>

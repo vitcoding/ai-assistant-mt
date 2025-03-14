@@ -41,7 +41,8 @@ async function startRecording() {
                 }
                 return response.json();
             }).then(data => {
-                console.log('File sent!', data);
+                // console.log('File sent!', data);
+
                 // send info about an audio message
                 ws.send("<<<audio>>>");
             }).catch(error => {

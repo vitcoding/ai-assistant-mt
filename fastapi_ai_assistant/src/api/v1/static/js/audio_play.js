@@ -3,7 +3,7 @@ async function fetchAndPlayWav(fileId) {
     try {
         const response = await fetch(`/api/v1/chat_ai/wav/${fileId}`);
 
-        console.log("response: " + response.body)
+        // console.log("response: " + response.body)
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }

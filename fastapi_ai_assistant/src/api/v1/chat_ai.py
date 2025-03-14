@@ -1,12 +1,9 @@
-from datetime import datetime
 import os
+from datetime import datetime
 from typing import Annotated
 
-import aiofiles
 from fastapi import (
     APIRouter,
-    Cookie,
-    Depends,
     File,
     HTTPException,
     Path,
@@ -15,8 +12,6 @@ from fastapi import (
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
-    WebSocketException,
-    status,
 )
 from fastapi.responses import FileResponse
 
@@ -26,6 +21,8 @@ from services.audio.speech_to_text import SpeechToText
 from services.chat_ai import ChatAI
 from services.llm_languages import LANGUAGES, get_langage_by_index
 from services.llm_models import MODELS, get_model_by_index
+from services.tools.path_identifier import PathCreator
+from services.tools.time_stamp import TimeStamp
 from services.websocket_connection import manager
 
 router = APIRouter()
@@ -35,22 +32,18 @@ router = APIRouter()
 @router.get("/")
 async def get(request: Request):
     log.debug(f"{__name__}: {get.__name__}: run")
+
+    ###
+    user_id = "noname"
+    timestamp = TimeStamp()
+    path_creator = PathCreator(timestamp, user_id)
+    item_id = path_creator.get_url()
+
     return templates.TemplateResponse(
         request,
         "chat_ai.html",
-        context={"models": MODELS, "languages": LANGUAGES},
+        context={"item_id": item_id, "models": MODELS, "languages": LANGUAGES},
     )
-
-
-async def get_cookie_or_token(
-    websocket: WebSocket,
-    session: Annotated[str | None, Cookie()] = None,
-    token: Annotated[str | None, Query()] = None,
-):
-    log.debug(f"{__name__}: {get_cookie_or_token.__name__}: run")
-    if session is None and token is None:
-        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
-    return session or token
 
 
 @router.websocket("/items/{item_id}/ws")
@@ -59,7 +52,7 @@ async def websocket_endpoint(
     websocket: WebSocket,
     item_id: str,
     q: int | None = None,
-    cookie_or_token: Annotated[str, Depends(get_cookie_or_token)],
+    chat_topic: Annotated[str, Query()],
     model_index: Annotated[int, Query()],
     language_index: Annotated[int, Query()],
     use_rag: Annotated[bool, Query()],
@@ -70,7 +63,16 @@ async def websocket_endpoint(
     model_name = get_model_by_index(model_index - 1)
     language = get_langage_by_index(language_index - 1)
     await manager.connect(websocket)
-    chat = ChatAI(item_id, websocket, model_name, language, use_rag, use_sound)
+
+    chat = ChatAI(
+        websocket,
+        item_id,
+        chat_topic,
+        model_name,
+        language,
+        use_rag,
+        use_sound,
+    )
     stt = SpeechToText()
 
     # for debug

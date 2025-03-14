@@ -26,9 +26,7 @@ function toggleMenu() {
 }
 
 async function connect(event) {
-
-    var itemId = document.getElementById("itemId");
-    var token = document.getElementById("token");
+    var chat_topic = document.getElementById("chatTopic");
     var model_index = document.getElementById("dropdownModel");
     var language_index = document.getElementById("dropdownLanguage");
     var checkbox_rag = document.getElementById("checkboxRag");
@@ -39,8 +37,8 @@ async function connect(event) {
 
     ws = new WebSocket(
         "ws://localhost:8005/api/v1/chat_ai/items/" +
-        itemId.value +
-        "/ws?token=" + token.value +
+        itemId +
+        "/ws?chat_topic=" + chatTopic.value +
         "&model_index=" + model_index.value +
         "&language_index=" + language_index.value +
         "&use_rag=" + checkbox_rag.checked +
