@@ -1,13 +1,12 @@
 import os
 
 
-def check_path():
-    app_path = os.path.dirname(os.path.abspath(__file__))
-    print(app_path)
+# draft
+def check_path(path: str, is_dir: bool = False):
+    current_path = os.path.dirname(os.path.abspath(__file__))
 
-    directory_nltk_data_path = f"{app_path}/.venv/nltk_data"
-    directory_punkt_tab_path = (
-        f"{directory_nltk_data_path}/tokenizers/punkt_tab"
-    )
-    if not os.path.isdir(directory_punkt_tab_path):
-        print(directory_punkt_tab_path)
+    if is_dir and os.path.isdir(path):
+        return True
+    elif not is_dir and os.path.isfile(path):
+        return True
+    return False

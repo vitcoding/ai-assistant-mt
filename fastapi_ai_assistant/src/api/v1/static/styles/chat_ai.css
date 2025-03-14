@@ -1,7 +1,7 @@
 :root {
     --color-black: #000008;
     --color-grey: #515152;
-    --color-white: #e0e0e0;
+    --color-white: #ebebeb;
     --color-red: #a30303;
     --color-primary-1: #003366;
     --color-primary-2: #014588;
@@ -150,22 +150,27 @@ section {
 #messages {
     display: flex;
     flex-direction: column;
-    color: var(--color-black);
 }
-#userMessage, #aiMessage {
-    border: 1px solid var(--color-primary-1);
+#systemMessage, #userMessage, #aiMessage {
+    border: 1px solid var(--color-grey);
     border-radius: 10px;
+    margin-top: 5px;
     padding: 10px;
-    margin: 5px 0px;
 }
-#userMessage {
-    margin-left: 20px;
-    border-color: var(--color-secondary-1);
-    color: var(--color-secondary-1);
+#systemMessage {
+    margin-top: 20px;
+    color: var(--color-grey);
 }
 #aiMessage {
     margin-right: 20px;
+    border-color: var(--color-primary-1);
     color: var(--color-primary-1);
+}
+#userMessage {
+    margin-top: 10px;
+    margin-left: 20px;
+    border-color: var(--color-secondary-1);
+    color: var(--color-secondary-1);
 }
 
 

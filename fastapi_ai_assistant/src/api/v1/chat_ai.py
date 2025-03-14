@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from typing import Annotated
 
 from fastapi import (
@@ -21,7 +20,10 @@ from services.audio.speech_to_text import SpeechToText
 from services.chat_ai import ChatAI
 from services.llm_languages import LANGUAGES, get_langage_by_index
 from services.llm_models import MODELS, get_model_by_index
-from services.tools.message_header_template import get_message_header
+from services.tools.message_template import (
+    get_chat_start_message,
+    get_message_header,
+)
 from services.tools.path_identifier import PathCreator
 from services.tools.time_stamp import TimeStamp
 from services.websocket_connection import manager
@@ -76,8 +78,11 @@ async def websocket_endpoint(
     )
     stt = SpeechToText()
 
-    # for debug
-    # await chat.send_message("System", f"Использование RAG '{use_rag}'.")
+    SHOW_START_MESSAGE = False
+    SHOW_START_MESSAGE = True
+    if SHOW_START_MESSAGE:
+        start_message = get_chat_start_message(chat.language, chat.chat_id)
+        await chat.send_message(start_message)
 
     try:
         while True:
@@ -87,7 +92,7 @@ async def websocket_endpoint(
             if user_message == "<<<audio>>>":
                 user_message = await stt.transcribe_audio()
 
-            await chat.send_message(chat.user_role_name, user_message)
+            await chat.send_message(user_message, chat.user_role_name)
 
             message_header = get_message_header(
                 chat.language, chat.ai_role_name

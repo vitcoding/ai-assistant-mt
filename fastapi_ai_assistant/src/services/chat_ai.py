@@ -17,8 +17,7 @@ from db.vector_db import get_vector_db_client
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
-from services.tools.time_stamp import TimeStamp
-from services.tools.message_header_template import get_message_header
+from services.tools.message_template import get_message_header
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "films_mt"
@@ -214,7 +213,9 @@ class ChatAI:
         ]
         return relevant_docs
 
-    async def send_message(self, role: str, message: str) -> None:
+    async def send_message(
+        self, message: str, role: str | None = None
+    ) -> None:
         """Sends a message to the chat."""
 
         message_header = get_message_header(self.language, role)

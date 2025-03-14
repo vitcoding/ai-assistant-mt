@@ -82,7 +82,13 @@ function appendToTemporary(textContainer, partialMessage) {
         if (match && match.length > 0) {
             textContainer.id = "userMessage"
         } else {
-            textContainer.id = "aiMessage"
+            const regex = /] (AI|ИИ):\s*(.*)/;
+            const match = partialMessage.match(regex);
+            if (match && match.length > 0) {
+                textContainer.id = "aiMessage"
+            } else {
+                textContainer.id = "systemMessage"
+            }
         }
 
     }
