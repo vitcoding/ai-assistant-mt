@@ -17,6 +17,8 @@ from db.vector_db import get_vector_db_client
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
+from services.tools.time_stamp import TimeStamp
+from services.tools.message_header_template import get_message_header
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "films_mt"
@@ -92,7 +94,7 @@ class ChatAI:
         self.speaker = None
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()
-        self.chat_start_timestamp = datetime.now(timezone.utc).isoformat()
+        self.chat_timestamp = datetime.now(timezone.utc).isoformat()
         self.llm = init_chat_model(
             model=self.model_name, model_provider=PROVIDER, **MODEL_KWARGS
         )
@@ -215,8 +217,8 @@ class ChatAI:
     async def send_message(self, role: str, message: str) -> None:
         """Sends a message to the chat."""
 
-        timestamp = datetime.now().isoformat()
-        await self.websocket.send_text(f"[{timestamp}] {role}: \n{message}")
+        message_header = get_message_header(self.language, role)
+        await self.websocket.send_text(f"{message_header} \n{message}")
         await self.websocket.send_text("<<<end>>>")
         log.info(
             f"{__name__}: {self.process.__name__}: chat message:"

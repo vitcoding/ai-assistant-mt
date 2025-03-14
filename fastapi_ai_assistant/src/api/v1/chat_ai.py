@@ -21,6 +21,7 @@ from services.audio.speech_to_text import SpeechToText
 from services.chat_ai import ChatAI
 from services.llm_languages import LANGUAGES, get_langage_by_index
 from services.llm_models import MODELS, get_model_by_index
+from services.tools.message_header_template import get_message_header
 from services.tools.path_identifier import PathCreator
 from services.tools.time_stamp import TimeStamp
 from services.websocket_connection import manager
@@ -88,10 +89,10 @@ async def websocket_endpoint(
 
             await chat.send_message(chat.user_role_name, user_message)
 
-            ai_message_timestamp = datetime.now().isoformat()
-            await websocket.send_text(
-                f"[{ai_message_timestamp}] {chat.ai_role_name}: \n"
+            message_header = get_message_header(
+                chat.language, chat.ai_role_name
             )
+            await websocket.send_text(f"{message_header} \n")
             async for chunk in chat.process(user_message):
                 await websocket.send_text(chunk)
 
