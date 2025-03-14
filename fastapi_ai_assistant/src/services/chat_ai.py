@@ -17,7 +17,7 @@ from db.vector_db import get_vector_db_client
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
-from services.cache import CacheService
+from services.cache import CacheService, get_cache_service
 from services.tools.message_template import get_message_header
 from services.tools.path_manager import PathManager
 
@@ -113,7 +113,6 @@ class ChatAI:
         self.memory = MemorySaver()
         self.chat_config = {"configurable": {"thread_id": self.chat_id}}
         self.graph = self._set_workflow()
-        self.cache = CacheService()
 
     def _set_workflow(self) -> StateGraph:
         """The chat workfow settings."""

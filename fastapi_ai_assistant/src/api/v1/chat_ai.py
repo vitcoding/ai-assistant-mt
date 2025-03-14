@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import (
     APIRouter,
+    Depends,
     File,
     HTTPException,
     Path,
@@ -17,6 +18,7 @@ from fastapi.responses import FileResponse
 from core.config import templates
 from core.logger import log
 from services.audio.speech_to_text import SpeechToText
+from services.cache import CacheService, get_cache_service
 from services.chat_ai import ChatAI
 from services.llm_languages import LANGUAGES, get_langage_by_index
 from services.llm_models import MODELS, get_model_by_index
@@ -68,6 +70,7 @@ async def websocket_endpoint(
     language_index: Annotated[int, Query()],
     use_rag: Annotated[bool, Query()],
     use_sound: Annotated[bool, Query()],
+    cache: CacheService = Depends(get_cache_service),
 ):
     log.debug(f"{__name__}: {websocket_endpoint.__name__}: run")
 
@@ -101,9 +104,10 @@ async def websocket_endpoint(
 
             # audio input
             if user_message == "<<<audio>>>":
-                file_path = chat.path_manager.get_latest_file_in_directory(
-                    chat.path_manager.chat_dir_audio
+                file_path_b = await cache.get(
+                    f"chat_id: {chat.chat_id}: user_audio"
                 )
+                file_path = file_path_b.decode("utf-8")
                 user_message = await stt.transcribe_audio(file_path)
 
             await chat.send_message(user_message, chat.user_role_name)
@@ -121,14 +125,21 @@ async def websocket_endpoint(
 
 
 @router.post("/upload-audio")
-async def upload_audio(uploaded_audio: UploadFile = File(...)):
+async def upload_audio(
+    uploaded_audio: UploadFile = File(...),
+    cache: CacheService = Depends(get_cache_service),
+):
     audio_file_name = uploaded_audio.filename
 
     path_manager = PathManager()
     file_name = path_manager.parse_audio_message_filename(audio_file_name)
     save_directory = path_manager.chat_dir_audio
+    file_path = f"{save_directory}{file_name}.wav"
 
-    with open(f"{save_directory}{file_name}.wav", "wb") as buffer:
+    chat_id = path_manager.chat_id
+    await cache.set(f"chat_id: {chat_id}: user_audio", file_path)
+
+    with open(file_path, "wb") as buffer:
         while contents := uploaded_audio.file.read(1024 * 16):
             buffer.write(contents)
 
