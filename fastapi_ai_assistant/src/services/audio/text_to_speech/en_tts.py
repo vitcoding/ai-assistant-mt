@@ -18,6 +18,7 @@ class TextToSpeechEn:
     def text_to_audio(
         self,
         text: str,
+        file_path: str,
         split_pattern: str | None = r"(\n\n)+",
     ) -> None:
         """Converts text to audio."""
@@ -40,4 +41,4 @@ class TextToSpeechEn:
                 f"\nindex: {i}\ngraphemes/text: {gs}\nphonemes: {ps}"
             )
             tensors.append(audio)
-            self.audio_editor.save_audio_from_tensors(tensors, "output.wav")
+            self.audio_editor.save_audio_from_tensors(tensors, file_path)

@@ -36,6 +36,7 @@ class TextToSpeechRu:
     def text_to_audio(
         self,
         text: str,
+        file_path: str,
         speaker: str = "xenia",
         sample_rate: int = 24000,
     ) -> None:
@@ -78,4 +79,4 @@ class TextToSpeechRu:
 
         log.info(f"{__name__}: {self.text_to_audio.__name__}: Model finished")
 
-        self.audio_editor.save_audio(audio, "output.wav")
+        self.audio_editor.save_audio(audio, file_path)

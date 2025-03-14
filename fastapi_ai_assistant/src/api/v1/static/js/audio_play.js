@@ -1,7 +1,7 @@
 async function fetchAndPlayWav(fileId) {
     // console.log("play audio")
     try {
-        const response = await fetch(`/api/v1/chat_ai/wav/${fileId}`);
+        const response = await fetch(`/api/v1/chat_ai/wav/${chatId}_${fileId}`);
 
         // console.log("response: " + response.body)
         if (!response.ok) {

@@ -108,11 +108,12 @@ async def websocket_endpoint(
 
             await chat.send_message(user_message, chat.user_role_name)
 
-            message_header = get_message_header(
+            message_header, ai_file_name = get_message_header(
                 chat.language, chat.ai_role_name
             )
+            await websocket.send_text(f"<<<ai_file_name>>> {ai_file_name}")
             await websocket.send_text(f"{message_header} \n")
-            async for chunk in chat.process(user_message):
+            async for chunk in chat.process(user_message, ai_file_name):
                 await websocket.send_text(chunk)
 
     except WebSocketDisconnect:
@@ -138,7 +139,10 @@ async def upload_audio(uploaded_audio: UploadFile = File(...)):
 async def get_wav(file_id: str = Path(...)):
 
     log.info(f"file_id: {file_id}")
-    filename = f"{file_id}.wav"
+    user_id, chat_time, file_name = file_id.split("_")
+    path_manager = PathManager()
+    path_manager.set_chat_directories(f"{user_id}_{chat_time}")
+    filename = f"{path_manager.chat_dir_audio}{file_name}.wav"
 
     if not os.path.exists(filename):
         raise HTTPException(

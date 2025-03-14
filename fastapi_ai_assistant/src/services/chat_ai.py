@@ -19,6 +19,7 @@ from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
 from services.tools.message_template import get_message_header
 from services.tools.path_manager import PathManager
+from services.tools.time_stamp import TimeStamp
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "films_mt"
@@ -221,7 +222,7 @@ class ChatAI:
     ) -> None:
         """Sends a message to the chat."""
 
-        message_header = get_message_header(self.language, role)
+        message_header, _ = get_message_header(self.language, role)
         await self.websocket.send_text(f"{message_header} \n{message}")
         await self.websocket.send_text("<<<end>>>")
         log.info(
@@ -229,7 +230,9 @@ class ChatAI:
             f"\n{role}: \n'''\n{message}\n'''"
         )
 
-    async def process(self, input_message: str) -> AsyncGenerator:
+    async def process(
+        self, input_message: str, ai_file_name: str
+    ) -> AsyncGenerator:
         """Processes user messages."""
 
         log.debug(f"{__name__}: {self.process.__name__}: start")
@@ -280,7 +283,10 @@ class ChatAI:
             ai_message = "".join(message_list) if message_list else ""
 
             if self.speaker:
-                await speak(self.speaker, ai_message)
+                file_path = (
+                    f"{self.path_manager.chat_dir_audio}{ai_file_name}.wav"
+                )
+                await speak(self.speaker, ai_message, file_path)
 
             yield "<<<end>>>"
 

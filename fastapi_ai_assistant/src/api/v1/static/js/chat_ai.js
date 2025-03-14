@@ -1,4 +1,5 @@
 var ws = null;
+var aiMessageName = null
 
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("dropdownLanguage").value =
@@ -71,17 +72,24 @@ async function connect(event) {
         const paragraph = chunksElement.querySelector('div');
 
         if (data === '<<<end>>>') {
-            if (paragraph.id === 'aiMessage' && checkbox_sound.checked === true) {
-                fetchAndPlayWav("output");
+            if (paragraph.id === 'aiMessage'
+                && checkbox_sound.checked === true
+                && aiMessageName !== null) {
+                fetchAndPlayWav(aiMessageName);
             }
             moveTemporaryToFinal(paragraph);
+            aiMessageName = null
             messageButton.disabled = false;
             recordButton.disabled = false;
 
         } else {
-            messageButton.disabled = true;
-            recordButton.disabled = true;
-            appendToTemporary(paragraph, data);
+            if (data.startsWith("<<<ai_file_name>>>")) {
+                aiMessageName = data.split(" ", 2)[1];
+            } else {
+                messageButton.disabled = true;
+                recordButton.disabled = true;
+                appendToTemporary(paragraph, data);
+            }
         }
 
     };
