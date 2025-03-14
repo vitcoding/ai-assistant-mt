@@ -22,11 +22,16 @@ async function startRecording() {
 
             const url = URL.createObjectURL(blob);
             document.getElementById('downloadLink').href = url;
-            document.getElementById('downloadLink').download = 'recorded-audio.wav';
+
+            const now = new Date();
+            const dateTimeString = now.toISOString().replace(/:/g, '-').replace(/\./g, 'MS');
+            const fileName = `${chatId}_${dateTimeString}.wav`;
+            document.getElementById('downloadLink').download = fileName;
+
             // document.getElementById('downloadLink').click();
 
             // send file
-            const file = new File([blob], 'recorded-audio.wav', { type: 'audio/wav' });
+            const file = new File([blob], fileName, { type: 'audio/wav' });
 
             // Create FormData and add file
             const formData = new FormData();

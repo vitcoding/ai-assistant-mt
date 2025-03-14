@@ -50,11 +50,7 @@ class TimeStamp:
                 timestamp_formatted = self.timestamp.strftime(
                     "%a %Y-%b-%d %H:%M:%S"
                 )
-            case "file":
-                timestamp_formatted = self.timestamp.strftime(
-                    "%Y%m%d_%H%M%S_%f"
-                )
-            case "url":
+            case "file" | "url":
                 timestamp_formatted = self.timestamp.strftime(
                     "%Y%m%d-%H%M%S-%f"
                 )

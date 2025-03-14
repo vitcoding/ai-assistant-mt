@@ -25,6 +25,7 @@ from services.tools.message_template import (
     get_message_header,
 )
 from services.tools.path_identifier import PathCreator
+from services.tools.path_manager import PathManager
 from services.tools.time_stamp import TimeStamp
 from services.websocket_connection import manager
 
@@ -40,7 +41,7 @@ async def get(request: Request):
     user_id = "noname"
     timestamp = TimeStamp()
     path_creator = PathCreator(timestamp, user_id)
-    item_id = path_creator.get_url()
+    chat_id = path_creator.get_url()
 
     previous_chat_history = False
 
@@ -48,7 +49,7 @@ async def get(request: Request):
         request,
         "chat_ai.html",
         context={
-            "item_id": item_id,
+            "chat_id": chat_id,
             "models": MODELS,
             "languages": LANGUAGES,
             "previous_chat": previous_chat_history,
@@ -56,11 +57,11 @@ async def get(request: Request):
     )
 
 
-@router.websocket("/items/{item_id}/ws")
+@router.websocket("/{chat_id}/ws")
 async def websocket_endpoint(
     *,
     websocket: WebSocket,
-    item_id: str,
+    chat_id: str,
     q: int | None = None,
     chat_topic: Annotated[str, Query()],
     model_index: Annotated[int, Query()],
@@ -74,14 +75,18 @@ async def websocket_endpoint(
     language = get_langage_by_index(language_index - 1)
     await manager.connect(websocket)
 
+    path_manager = PathManager()
+    path_manager.set_chat_directories(chat_id)
+
     chat = ChatAI(
         websocket,
-        item_id,
+        chat_id,
         chat_topic,
         model_name,
         language,
         use_rag,
         use_sound,
+        path_manager,
     )
     stt = SpeechToText()
 
@@ -96,7 +101,10 @@ async def websocket_endpoint(
 
             # audio input
             if user_message == "<<<audio>>>":
-                user_message = await stt.transcribe_audio()
+                file_path = chat.path_manager.get_latest_file_in_directory(
+                    chat.path_manager.chat_dir_audio
+                )
+                user_message = await stt.transcribe_audio(file_path)
 
             await chat.send_message(user_message, chat.user_role_name)
 
@@ -113,12 +121,17 @@ async def websocket_endpoint(
 
 @router.post("/upload-audio")
 async def upload_audio(uploaded_audio: UploadFile = File(...)):
+    audio_file_name = uploaded_audio.filename
 
-    with open(f"{uploaded_audio.filename}", "wb") as buffer:
+    path_manager = PathManager()
+    file_name = path_manager.parse_audio_message_filename(audio_file_name)
+    save_directory = path_manager.chat_dir_audio
+
+    with open(f"{save_directory}{file_name}.wav", "wb") as buffer:
         while contents := uploaded_audio.file.read(1024 * 16):
             buffer.write(contents)
 
-    return {"filename": uploaded_audio.filename}
+    return {"filename": file_name}
 
 
 @router.get("/wav/{file_id}")

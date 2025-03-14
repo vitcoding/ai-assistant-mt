@@ -18,6 +18,7 @@ from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
 from services.tools.message_template import get_message_header
+from services.tools.path_manager import PathManager
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "films_mt"
@@ -82,6 +83,7 @@ class ChatAI:
         language: str,
         use_rag: bool,
         use_sound: bool,
+        path_manager: PathManager,
     ) -> None:
         self.websocket = websocket
         self.chat_id = chat_id
@@ -90,6 +92,7 @@ class ChatAI:
         self.language = language
         self.use_rag = use_rag
         self.use_sound = use_sound
+        self.path_manager = path_manager
         self.speaker = None
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()

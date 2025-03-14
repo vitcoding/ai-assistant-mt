@@ -16,7 +16,7 @@
             </div>
             <div class="header__parameters expanded" id="menuContent">
                 <div class="header__chat_params" id="parameters">
-                    <label>Chat ID: {{ item_id }}</label>
+                    <label>Chat ID: {{ chat_id }}</label>
                     <label>Chat topic: <input type="text" id="chatTopic" autocomplete="off" value="default" /></label>
                 </div>
                 <div class="header__model" id="parameters">
@@ -77,7 +77,7 @@
     </section>
 
     <script>
-        const itemId = "{{ item_id }}";
+        const chatId = "{{ chat_id }}";
         const previousChat = "{{ previous_chat }}"
     </script>
     <script src="/static/js/chat_ai.js"></script>
