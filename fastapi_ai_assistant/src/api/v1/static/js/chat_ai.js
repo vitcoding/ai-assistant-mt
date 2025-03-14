@@ -35,10 +35,21 @@ async function connect(event) {
     var messageButton = document.getElementById('sendMessageButton');
     var recordButton = document.getElementById('recordButton');
 
+    messageButton.disabled = true;
+    recordButton.disabled = true;
+
+    if (previousChat === "False") {
+        var messages = document.getElementById('messages');
+
+        while (messages.firstChild) {
+            messages.removeChild(messages.firstChild);
+        }
+    }
+
     ws = new WebSocket(
         "ws://localhost:8005/api/v1/chat_ai/items/" +
         itemId +
-        "/ws?chat_topic=" + chatTopic.value +
+        "/ws?chat_topic=" + chat_topic.value +
         "&model_index=" + model_index.value +
         "&language_index=" + language_index.value +
         "&use_rag=" + checkbox_rag.checked +
@@ -47,8 +58,11 @@ async function connect(event) {
 
     toggleMenu()
 
-    messageButton.disabled = false;
-    recordButton.disabled = false;
+    ws.onopen = function () {
+        // console.log("WebSocket connection established!");
+        messageButton.disabled = false;
+        recordButton.disabled = false;
+    };
 
 
     ws.onmessage = function (event) {

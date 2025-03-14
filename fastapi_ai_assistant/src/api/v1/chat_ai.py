@@ -42,10 +42,17 @@ async def get(request: Request):
     path_creator = PathCreator(timestamp, user_id)
     item_id = path_creator.get_url()
 
+    previous_chat_history = False
+
     return templates.TemplateResponse(
         request,
         "chat_ai.html",
-        context={"item_id": item_id, "models": MODELS, "languages": LANGUAGES},
+        context={
+            "item_id": item_id,
+            "models": MODELS,
+            "languages": LANGUAGES,
+            "previous_chat": previous_chat_history,
+        },
     )
 
 
@@ -79,7 +86,6 @@ async def websocket_endpoint(
     stt = SpeechToText()
 
     SHOW_START_MESSAGE = False
-    SHOW_START_MESSAGE = True
     if SHOW_START_MESSAGE:
         start_message = get_chat_start_message(chat.language, chat.chat_id)
         await chat.send_message(start_message)
