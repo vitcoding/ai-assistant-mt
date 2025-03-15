@@ -32,7 +32,8 @@ DATA="\
 
 INSERT_QUERY="INSERT INTO ${TABLE} \
 (id, login, password, first_name, last_name, about, birth_date, \
-email, phone_number, role, created_at, updated_at) VALUES ${DATA};"
+email, phone_number, role, created_at, updated_at) VALUES ${DATA} \
+ON CONFLICT ${id} DO NOTHING;"
 
 export PGPASSWORD="${POSTGRES_PASSWORD}"
 
@@ -40,7 +41,7 @@ echo "Connecting to PostgreSQL at ${POSTGRES_HOST}:${POSTGRES_PORT}..."
 psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "${INSERT_QUERY}"
 
 if [ $? -eq 0 ]; then
-  echo "Data inserted successfully!"
+  echo "The operation has been done successfully!"
 else
   echo "Failed to insert data."
 fi

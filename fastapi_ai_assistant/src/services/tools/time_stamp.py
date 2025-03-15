@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from services.llm_languages import LANGUAGES, LOCALES
+from services.llm_languages import LANGUAGES
 
 
 class TimeStamp:

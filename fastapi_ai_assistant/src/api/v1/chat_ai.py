@@ -17,6 +17,8 @@ from fastapi.responses import FileResponse
 
 from core.config import templates
 from core.logger import log
+from secure import api_key_schema
+from secure.auth import UpgradeAPIKeyCookie
 from services.audio.speech_to_text import SpeechToText
 from services.cache import CacheService, get_cache_service
 from services.chat_ai import ChatAI
@@ -36,11 +38,14 @@ router = APIRouter()
 
 # url: http://localhost:8005/api/v1/chat_ai/
 @router.get("/")
-async def get(request: Request):
+async def get(
+    request: Request,
+    auth: str = Depends(api_key_schema),
+):
     log.debug(f"{__name__}: {get.__name__}: run")
 
-    ###
-    user_id = "noname"
+    user_id = UpgradeAPIKeyCookie.get_current_user(auth[0])
+
     timestamp = TimeStamp()
     path_creator = PathCreator(timestamp, user_id)
     chat_id = path_creator.get_url()
