@@ -5,7 +5,6 @@ import ollama
 from fastapi import WebSocket
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import BaseMessage, HumanMessage, trim_messages
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, StateGraph
 from langgraph.graph.message import add_messages
@@ -14,6 +13,7 @@ from typing_extensions import Annotated, TypedDict
 from core.config import config
 from core.logger import log
 from db.vector_db import get_vector_db_client
+from promts.chat_ai_templates import prompt_template
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
@@ -23,10 +23,8 @@ from services.tools.path_manager import PathManager
 
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "films_mt"
-# CHROMA_COLLECTION_NAME = "example_langchain"
 
 # LLM
-# MODEL_NAME = config.llm.model
 PROVIDER = config.llm.provider
 MODEL_KWARGS = {
     "keep_alive": 300,
@@ -37,33 +35,10 @@ MODEL_KWARGS = {
 
 # Embedding
 EMBEDDING_MODEL_NAME = config.llm.embedding_model
-EMBEDDING_SEARCH_RESULTS = 3
+EMBEDDING_SEARCH_RESULTS = 5
 
 # Chat config params
 CHAT_MAX_TOKENS = 10_000
-
-prompt_template = ChatPromptTemplate.from_messages(
-    [
-        # SystemMessage(
-        #     "You are a helpful assistant named 'AI Chat'. Answer all questions "
-        #     "to the best of your ability in {language}."
-        #     "{docs_content}",
-        # ),
-        (
-            "system",
-            "Your name is 'ИИ Ассистент'. "
-            "You are an assistant for question-answering tasks. \n"
-            "Use the retrieved documents of retrieved context to answer "
-            "the question. If you don't know the answer, say that you "
-            "don't know. Use three sentences maximum and keep the "
-            "answer concise. "
-            "You must speak only {language}."
-            "\n\n\n"
-            "Retrieved context:\n\n{docs_content}",
-        ),
-        MessagesPlaceholder(variable_name="messages"),
-    ]
-)
 
 
 class State(TypedDict):
@@ -260,11 +235,17 @@ class ChatAI:
             log.debug(f"{__name__}: {self.process.__name__}: end (no input)")
         else:
             # docs content
-            docs = ""
+            docs_list = ""
             if self.use_rag:
-                docs = await self.get_docs(input_message)
-            if isinstance(docs, (list, tuple)):
-                docs_content = "\n\n".join(doc for doc in docs)
+                docs_list = await self.get_docs(input_message)
+            if isinstance(docs_list, (list, tuple)):
+                docs_system_message = (
+                    "\n\n\nUse the retrieved documents of retrieved context "
+                    "to answer the question."
+                    "\n\nRetrieved context:\n\n"
+                )
+                docs_text = "\n\n".join(doc for doc in docs_list)
+                docs_content = f"{docs_system_message}{docs_text}"
             else:
                 docs_content = ""
             log.info(
