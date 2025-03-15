@@ -274,7 +274,13 @@ class ChatAI:
                 file_path = (
                     f"{self.path_manager.chat_dir_audio}{ai_file_name}.wav"
                 )
-                await speak(self.speaker, ai_message, file_path)
+                try:
+                    await speak(self.speaker, ai_message, file_path)
+                except Exception as err:
+                    log.error(
+                        f"{__name__}: {self.process.__name__}: "
+                        f"\nError {type(err)}: {err}"
+                    )
 
             yield "<<<end>>>"
 
