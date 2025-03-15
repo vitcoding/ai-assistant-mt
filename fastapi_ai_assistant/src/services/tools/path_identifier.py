@@ -17,4 +17,4 @@ class PathCreator:
 
     def get_url(self) -> str:
         """Gets url."""
-        return f"{self.user_id}_{self.timestamp.get_str_timestamp("url")}"
+        return f"{self.user_id}_{self.timestamp.get_str_timestamp('url')}"

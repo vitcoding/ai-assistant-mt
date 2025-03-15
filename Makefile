@@ -18,6 +18,10 @@ MT-SERVICE-NAME = mt-search-service
 AI-DC = fastapi_ai_assistant/docker-compose-ai.yml
 AI-NAME = ai
 AI-SERVICE-NAME = ai_assistant_api
+# ollama service
+OLLAMA-DC = ollama_ai/docker-compose-ollama.yml
+OLLAMA-NAME = ollama
+OLLAMA-SERVICE-NAME = ollama-ai
 
 
 # network
@@ -30,19 +34,23 @@ net-rm:
 up:
 	make net-create
 	make up-$(AUTH-NAME)
+	make up-$(OLLAMA-NAME)
 	make up-$(AI-NAME)
 	make up-$(MT-NAME)
 destroy:
 	make destroy-$(AI-NAME)
+	make destroy-$(OLLAMA-NAME)
 	make destroy-$(MT-NAME)
 	make destroy-$(AUTH-NAME)
 	make net-rm
 stop:
 	make stop-$(AI-NAME)
+	make stop-$(OLLAMA-NAME)
 	make stop-$(MT-NAME)
 	make stop-$(AUTH-NAME)
 start:
 	make start-$(AUTH-NAME)
+	make start-$(OLLAMA-NAME)
 	make start-$(AI-NAME)
 	make start-$(MT-NAME)
 
@@ -58,7 +66,12 @@ rebuild-$(AI-NAME):
 	docker compose -f $(AI-DC) rm -f $(AI-SERVICE-NAME)
 	docker compose -f $(AI-DC) build $(AI-SERVICE-NAME)
 	docker compose -f $(AI-DC) up -d $(AI-SERVICE-NAME)
-	docker logs -f $(AI-SERVICE-NAME)
+# docker logs -f $(AI-SERVICE-NAME)
+rebuild-ai-nginx:
+	docker compose -f $(AI-DC) stop ai_assistant-nginx
+	docker compose -f $(AI-DC) rm -f ai_assistant-nginx
+	docker compose -f $(AI-DC) build ai_assistant-nginx
+	docker compose -f $(AI-DC) up -d ai_assistant-nginx
 
 stop-$(AI-NAME):
 	docker compose -f $(AI-DC) stop
@@ -71,6 +84,30 @@ start-$(AI-NAME):
 # 	docker logs -f tests
 # 	docker compose -f fastapi_ai_assistant/src/tests/functional/docker-compose.yml down -v
 # 	make net-rm
+
+# ollama service
+# OLLAMA-NAME = ollama
+up-$(OLLAMA-NAME):
+	docker compose -f $(OLLAMA-DC) up -d --build --force-recreate
+destroy-$(OLLAMA-NAME):
+	docker compose -f $(OLLAMA-DC) down -v
+rebuild-$(OLLAMA-NAME):
+	docker compose -f $(OLLAMA-DC) stop $(OLLAMA-SERVICE-NAME)
+	docker compose -f $(OLLAMA-DC) rm -f $(OLLAMA-SERVICE-NAME)
+	docker compose -f $(OLLAMA-DC) build $(OLLAMA-SERVICE-NAME)
+	docker compose -f $(OLLAMA-DC) up -d $(OLLAMA-SERVICE-NAME)
+# docker logs -f $(OLLAMA-SERVICE-NAME)
+
+stop-$(OLLAMA-NAME):
+	docker compose -f $(OLLAMA-DC) stop
+start-$(OLLAMA-NAME):
+	docker compose -f $(OLLAMA-DC) start
+# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama pull gemma3:4b
+# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama pull gemma3:12b
+# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama run gemma3:4b
+# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama list
+# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama rm llama3.3
+
 
 # auth service
 # AUTH-NAME = auth

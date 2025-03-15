@@ -1,4 +1,4 @@
-MODELS = ["llama3.2:3b", "llama3"]
+MODELS = ["gemma3:4b", "gemma3:12b", "llama3.2:3b"]
 
 
 def get_model_by_index(index: int) -> str:

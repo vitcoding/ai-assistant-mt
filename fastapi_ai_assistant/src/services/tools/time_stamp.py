@@ -1,4 +1,3 @@
-import locale
 from datetime import datetime, timezone
 
 from services.llm_languages import LANGUAGES, LOCALES
@@ -31,10 +30,6 @@ class TimeStamp:
         if language in LANGUAGES:
             self.language = language
 
-        locale_code = LOCALES.get(self.language)
-        if locale_code is not None:
-            locale.setlocale(locale.LC_ALL, locale_code)
-
     def get_str_timestamp(self, timestamp_format: str) -> str:
         """
         Gets a string timestamp for:
@@ -48,7 +43,7 @@ class TimeStamp:
                 )
             case "message":
                 timestamp_formatted = self.timestamp.strftime(
-                    "%a %Y-%b-%d %H:%M:%S"
+                    "%Y-%m-%d %H:%M:%S"
                 )
             case "file" | "url":
                 timestamp_formatted = self.timestamp.strftime(
