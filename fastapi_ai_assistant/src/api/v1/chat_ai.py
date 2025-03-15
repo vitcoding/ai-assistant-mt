@@ -12,6 +12,7 @@ from fastapi import (
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
+    status,
 )
 from fastapi.responses import FileResponse
 
@@ -37,7 +38,13 @@ router = APIRouter()
 
 
 # url: http://localhost:8005/api/v1/chat_ai/
-@router.get("/")
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    summary="AI Chat",
+    description="Start a chat with AI",
+    response_description="A chat AI template html",
+)
 async def get(
     request: Request,
     auth: str = Depends(api_key_schema),
@@ -69,7 +76,6 @@ async def websocket_endpoint(
     *,
     websocket: WebSocket,
     chat_id: str,
-    q: int | None = None,
     chat_topic: Annotated[str, Query()],
     model_index: Annotated[int, Query()],
     language_index: Annotated[int, Query()],
@@ -129,11 +135,17 @@ async def websocket_endpoint(
         manager.disconnect(websocket)
 
 
-@router.post("/upload-audio")
+@router.post(
+    "/upload-audio",
+    status_code=status.HTTP_200_OK,
+    summary="Upload audio",
+    description="Upload an audio file of a message",
+    response_description="A name of an audio file",
+)
 async def upload_audio(
     uploaded_audio: UploadFile = File(...),
     cache: CacheService = Depends(get_cache_service),
-):
+) -> dict[str, str]:
     audio_file_name = uploaded_audio.filename
 
     path_manager = PathManager()
@@ -151,8 +163,14 @@ async def upload_audio(
     return {"filename": file_name}
 
 
-@router.get("/wav/{file_id}")
-async def get_wav(file_id: str = Path(...)):
+@router.get(
+    "/wav/{file_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Send audio",
+    description="Send an audio file of an ai message",
+    response_description="A name of an audio file",
+)
+async def get_wav(file_id: str = Path(...)) -> FileResponse:
 
     log.info(f"file_id: {file_id}")
     user_id, chat_time, file_name = file_id.split("_")
