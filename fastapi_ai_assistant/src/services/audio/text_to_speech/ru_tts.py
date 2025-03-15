@@ -26,13 +26,6 @@ class TextToSpeechRu:
         self.__model.to(device)
         self.audio_editor = AudioEditor()
 
-    @staticmethod
-    def __num2words_ru(match: str) -> str:
-        """Converts numbers into words."""
-        clean_number = match.group().replace(",", ".")
-        return num2words(clean_number, lang="ru")
-
-    # Speakers available: aidar, baya, kseniya, xenia, eugene, random
     def text_to_audio(
         self,
         text: str,
@@ -40,12 +33,39 @@ class TextToSpeechRu:
         speaker: str = "xenia",
         sample_rate: int = 24000,
     ) -> None:
+        """Converts text to audio by pre-splitting the text into parts."""
+
+        text_list = text.split("\n\n")
+        log.info(
+            f"{__name__}: {self.generate_audio_from_text.__name__}: "
+            f"\ntext_list: {text_list}"
+        )
+        audio_list = [
+            self.generate_audio_from_text(chunk, speaker, sample_rate)
+            for chunk in text_list
+        ]
+
+        self.audio_editor.save_audio_from_tensors(audio_list, file_path)
+
+    @staticmethod
+    def __num2words_ru(match: str) -> str:
+        """Converts numbers into words."""
+        clean_number = match.group().replace(",", ".")
+        return num2words(clean_number, lang="ru")
+
+    # Speakers available: aidar, baya, kseniya, xenia, eugene, random
+    def generate_audio_from_text(
+        self,
+        text: str,
+        speaker: str,
+        sample_rate: int,
+    ) -> torch.Tensor:
         """Converts text to audio."""
 
         words = translit(text, "ru")
         words = re.sub(r"-?[0-9][0-9,._]*", self.__num2words_ru, words)
         log.debug(
-            f"{__name__}: {self.text_to_audio.__name__}: "
+            f"{__name__}: {self.generate_audio_from_text.__name__}: "
             f"\nText after translit and num2words: {words}"
         )
 
@@ -62,7 +82,9 @@ class TextToSpeechRu:
         ]:
             speaker = "xenia"
 
-        log.info(f"{__name__}: {self.text_to_audio.__name__}: Model started")
+        log.info(
+            f"{__name__}: {self.generate_audio_from_text.__name__}: Model started"
+        )
 
         try:
             audio = self.__model.apply_tts(
@@ -72,11 +94,12 @@ class TextToSpeechRu:
             )
         except ValueError as err:
             log.error(
-                f"{__name__}: {self.text_to_audio.__name__}: "
+                f"{__name__}: {self.generate_audio_from_text.__name__}: "
                 f"\nBad input: Error: {err}"
             )
             return None
 
-        log.info(f"{__name__}: {self.text_to_audio.__name__}: Model finished")
-
-        self.audio_editor.save_audio(audio, file_path)
+        log.info(
+            f"{__name__}: {self.generate_audio_from_text.__name__}: Model finished"
+        )
+        return audio
