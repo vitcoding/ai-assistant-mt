@@ -105,10 +105,10 @@ stop-$(AIINFRA-NAME):
 start-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) start
 # docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
-# docker compose -f ai_infrastructure/docker-compose-aiinfraa.yml exec -it ollama-ai ollama list
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama rm llama3.3
+# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
+# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
+# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama list
+# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama rm llama3.3
 
 
 # auth service
