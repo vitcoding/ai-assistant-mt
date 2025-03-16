@@ -54,9 +54,6 @@ button:active {
     background: var(--color-secondary-2);
     transform: scale(0.95);
 }
-#recordButton:active {
-    background: var(--color-red);
-}
 button:disabled {
     background-color: var(--color-grey);
     cursor: not-allowed;
@@ -217,11 +214,28 @@ textarea::placeholder {
     height: 25px;
 }
 #recordButton {
-    width: 50px;
-    height: 60px;
+    background-image: url('/static/images/chat/microphone.png'); 
+    background-size: contain; 
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 32px; 
+    height: 44px; 
+    border: none; 
+    cursor: pointer;
     margin-right: 5px;
 }
-
+#recordButton:active {
+    background: var(--color-red);
+    background-image: url('/static/images/chat/microphone.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 32px; 
+    height: 44px; 
+    border: none; 
+    cursor: pointer;
+    margin-right: 5px;
+}
 .temporary {
     border-radius: 10px;
     text-align: bottom;

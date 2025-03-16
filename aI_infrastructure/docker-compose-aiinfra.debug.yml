@@ -9,10 +9,11 @@ services:
     #   - /dev/dri
     environment:
       - LIBGL_ALWAYS_SOFTWARE=0
+    ########
     volumes:
       - ./ollama:/root/.ollama
-    expose:
-      - 11434
+    ports:
+      - 11434:11434
     restart: unless-stopped
     networks:
       - shared-network
@@ -22,6 +23,8 @@ services:
     container_name: chroma-ai
     expose:
       - 8000
+    ports:
+      - 8010:8000
     restart: unless-stopped
     networks:
       - shared-network
@@ -31,6 +34,8 @@ services:
     container_name: cache-ai
     expose:
       - ${REDIS_PORT}
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
     volumes:
       - ai-rds-data:/data
       - ai.redis.conf:/usr/local/etc/redis/redis.conf

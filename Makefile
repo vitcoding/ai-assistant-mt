@@ -35,8 +35,9 @@ up:
 	make net-create
 	make up-$(AIINFRA-NAME)
 	make up-$(AUTH-NAME)
-	make up-$(MT-NAME)
+	docker compose -f $(AIINFRA-DC) exec -it ollama-ai ollama pull evilfreelancer/enbeddrus
 	docker compose -f $(AIINFRA-DC) exec -it ollama-ai ollama pull gemma3:4b
+	make up-$(MT-NAME)
 	make up-$(AI-NAME)
 destroy:
 	make destroy-$(AI-NAME)
@@ -183,3 +184,48 @@ dc-prune:
 	docker system prune -a -f
 dc-volume-prune:
 	docker volume prune -f
+
+
+### ai assistant debug mode
+# ai infrastructure
+AIINFRA-DEBUG-DC = aI_infrastructure/docker-compose-aiinfra.debug.yml
+AIINFRA-DEBUG-NAME = ollama-debug
+
+# ai_infrastructure (debug)
+# AIINFRA-DEBUG-DEBUG-NAME = ollama-debug
+up-$(AIINFRA-DEBUG-NAME):
+	docker compose -f $(AIINFRA-DEBUG-DC) up -d --build --force-recreate
+destroy-$(AIINFRA-DEBUG-NAME):
+	docker compose -f $(AIINFRA-DEBUG-DC) down -v
+rebuild-$(AIINFRA-DEBUG-NAME):
+	docker compose -f $(AIINFRA-DEBUG-DC) stop $(AIINFRA-SERVICE-NAME)
+	docker compose -f $(AIINFRA-DEBUG-DC) rm -f $(AIINFRA-SERVICE-NAME)
+	docker compose -f $(AIINFRA-DEBUG-DC) build $(AIINFRA-SERVICE-NAME)
+	docker compose -f $(AIINFRA-DEBUG-DC) up -d $(AIINFRA-SERVICE-NAME)
+
+stop-$(AIINFRA-DEBUG-NAME):
+	docker compose -f $(AIINFRA-DEBUG-DC) stop
+start-$(AIINFRA-DEBUG-NAME):
+	docker compose -f $(AIINFRA-DEBUG-DC) start
+
+# launch in debug mode
+up-debug:
+	make net-create
+	make up-$(AIINFRA-DEBUG-NAME)
+	make up-$(AUTH-NAME)
+	make up-$(MT-NAME)
+	make ai-prj
+destroy-debug:
+	make destroy-$(MT-NAME)
+	make destroy-$(AUTH-NAME)
+	make destroy-$(AIINFRA-DEBUG-NAME)
+	make net-rm
+stop-debug:
+	make stop-$(MT-NAME)
+	make stop-$(AUTH-NAME)
+	make stop-$(AIINFRA-DEBUG-NAME)
+start-debug:
+	make start-$(AIINFRA-DEBUG-NAME)
+	make start-$(AUTH-NAME)
+	make start-$(MT-NAME)
+	make ai-prj
