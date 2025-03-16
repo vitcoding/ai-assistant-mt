@@ -1,1 +1,1 @@
-# Ollama service
+# Ollama, Chroma, Redis

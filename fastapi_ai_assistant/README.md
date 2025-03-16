@@ -24,7 +24,7 @@
 - **документация OpenAPI**: встроенная автоматически генерируемая документация FastAPI на основе спецификаций OpenAPI.
 
 ### Тесты.
-Сделаны тесты для проверки работоспособности основных эндпоинтов сервиса.
+Сделаны тесты для проверки работоспособности эндпоинтa чата.
 
 ### Основные команды для запуска сервиса:
 - **запуск сервиса в docker compose**: 
@@ -32,9 +32,9 @@
 - **остановка сервиса**: 
 `docker compose -f docker-compose-ai.yml down`;
 - **запуск тестов**: 
-`docker compose -f src/tests/functional/docker-compose.yml up -d`;
+`docker compose -f src/tests/docker-compose.yml up -d`;
 - **завершение тестов**: 
-`docker compose -f src/tests/functional/docker-compose.yml down -v`.
+`docker compose -f src/tests/docker-compose.yml down -v`.
 
 ### Документация OpenAPI
 [http://localhost:8005/api/openapi](http://localhost:8005/api/openapi)

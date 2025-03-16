@@ -1,3 +1,5 @@
 recorded*
 output*
-app_data
+app_data/chats
+app_data/kokoro_voices/am_adam.pt
+app_data/neural_model/ru_voices_model.pt

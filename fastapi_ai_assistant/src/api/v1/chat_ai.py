@@ -14,7 +14,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 from core.config import config, templates
 from core.logger import log
@@ -41,6 +41,7 @@ router = APIRouter()
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
+    response_class=HTMLResponse,
     summary="AI Chat",
     description="Start a chat with AI",
     response_description="A chat AI template html",
@@ -48,7 +49,7 @@ router = APIRouter()
 async def get(
     request: Request,
     auth: str = Depends(api_key_schema),
-):
+) -> HTMLResponse:
     log.debug(f"{__name__}: {get.__name__}: run")
 
     user_id = UpgradeAPIKeyCookie.get_current_user(auth[0])
@@ -141,7 +142,7 @@ async def websocket_endpoint(
     "/upload-audio",
     status_code=status.HTTP_200_OK,
     summary="Upload audio",
-    description="Upload an audio file of a message",
+    description="Upload an audio file of an user message",
     response_description="A name of an audio file",
 )
 async def upload_audio(
@@ -168,9 +169,10 @@ async def upload_audio(
 @router.get(
     "/wav/{file_id}",
     status_code=status.HTTP_200_OK,
-    summary="Send audio",
-    description="Send an audio file of an ai message",
-    response_description="A name of an audio file",
+    response_class=FileResponse,
+    summary="Download audio",
+    description="Download an audio file of an ai message",
+    response_description="An audio file of an ai message",
 )
 async def get_wav(file_id: str = Path(...)) -> FileResponse:
 

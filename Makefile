@@ -78,12 +78,13 @@ stop-$(AI-NAME):
 start-$(AI-NAME):
 	docker compose -f $(AI-DC) start
 
-# tests-$(AI-NAME):
-# 	make net-create
-# 	docker compose -f fastapi_ai_assistant/src/tests/functional/docker-compose.yml up -d --build --force-recreate
-# 	docker logs -f tests
-# 	docker compose -f fastapi_ai_assistant/src/tests/functional/docker-compose.yml down -v
-# 	make net-rm
+tests-$(AI-NAME):
+	docker network create test-network
+	docker compose -f fastapi_ai_assistant/src/tests/docker-compose.yml up -d --build --force-recreate
+	docker logs -f tests
+	docker compose -f fastapi_ai_assistant/src/tests/docker-compose.yml down -v
+	docker network rm test-network
+# docker compose -f fastapi_ai_assistant/src/tests/docker-compose.yml down --rmi all --volumes
 
 # ai_infrastructure
 # AIINFRA-NAME = ollama
@@ -102,7 +103,7 @@ stop-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) stop
 start-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) start
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
+# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
 # docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
 # docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
 # docker compose -f ai_infrastructure/docker-compose-aiinfraa.yml exec -it ollama-ai ollama list
