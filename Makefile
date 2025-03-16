@@ -36,6 +36,7 @@ up:
 	make up-$(AIINFRA-NAME)
 	make up-$(AUTH-NAME)
 	make up-$(MT-NAME)
+	docker compose -f $(AIINFRA-DC) exec -it ollama-ai ollama pull gemma3:4b
 	make up-$(AI-NAME)
 destroy:
 	make destroy-$(AI-NAME)
