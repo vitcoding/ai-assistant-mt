@@ -88,6 +88,7 @@ class ChatAI:
         self.memory = MemorySaver()
         self.chat_config = {"configurable": {"thread_id": self.chat_id}}
         self.graph = self._set_workflow()
+        self.ai_audio_file_name = None
 
     def _set_workflow(self) -> StateGraph:
         """The chat workfow settings."""
@@ -276,11 +277,15 @@ class ChatAI:
                 )
                 try:
                     await speak(self.speaker, ai_message, file_path)
+                    await self.websocket.send_text(
+                        f"<<<ai_file_name>>> {self.ai_audio_file_name}"
+                    )
                 except Exception as err:
                     log.error(
                         f"{__name__}: {self.process.__name__}: "
                         f"\nError {type(err)}: {err}"
                     )
+                    self.ai_audio_file_name = None
 
             yield "<<<end>>>"
 

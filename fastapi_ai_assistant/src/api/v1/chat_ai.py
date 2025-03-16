@@ -126,7 +126,8 @@ async def websocket_endpoint(
             message_header, ai_file_name = get_message_header(
                 chat.language, chat.ai_role_name
             )
-            await websocket.send_text(f"<<<ai_file_name>>> {ai_file_name}")
+            if chat.use_sound:
+                chat.ai_audio_file_name = ai_file_name
             await websocket.send_text(f"{message_header} \n")
             async for chunk in chat.process(user_message, ai_file_name):
                 await websocket.send_text(chunk)
