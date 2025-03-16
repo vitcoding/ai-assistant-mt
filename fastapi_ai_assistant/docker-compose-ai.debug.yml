@@ -1,0 +1,30 @@
+services:
+  ai_assistant_api:
+    build: .
+    container_name: ai_assistant_api
+    expose:
+      - 8000
+    # ports:
+    #   - "8005:8000"
+    env_file:
+      - ./.env
+    networks:
+      - shared-network
+
+  ai_assistant-nginx:
+    image: nginx:alpine3.18
+    container_name: ai_assistant-nginx
+    ports:
+      - 8005:80
+    volumes:
+      - ./data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - ./src/api/v1/static:/data/static
+    env_file:
+      - ./.env
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true

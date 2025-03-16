@@ -1,0 +1,55 @@
+name: movie-theatre-tests
+
+services:
+  mt-search-db:
+    image: elasticsearch:8.6.2
+    container_name: elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: -Xms150m -Xmx150m
+    env_file:
+      - ../../../.env
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    expose:
+      - 9200
+    ports:
+      - 9200:9200
+    restart: always
+
+  mt-cache:
+    image: redis
+    container_name: redis
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
+    volumes:
+      - rds-data:/data
+      - redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+
+  mt-search-service:
+    build: ../../.
+    container_name: fastapi
+    env_file:
+      - ../../../.env
+    expose:
+      - 8000
+    ports:
+      - 8000:8000
+    depends_on:
+      - mt-search-db
+      - mt-cache
+
+  tests:
+    build: .
+    container_name: tests
+    depends_on:
+      - mt-search-service
+
+volumes:
+  es-data:
+  rds-data:
+  redis.conf:

@@ -1,0 +1,53 @@
+services:
+  ollama-ai:
+    image: ollama/ollama
+    container_name: ollama-ai
+    devices:
+      - "/dev/dri/card1:/dev/dri/card1"
+      - "/dev/dri/renderD128:/dev/dri/renderD128"
+    # devices:
+    #   - /dev/dri
+    environment:
+      - LIBGL_ALWAYS_SOFTWARE=0
+    ########
+    volumes:
+      - ./ollama:/root/.ollama
+    ports:
+      - 11434:11434
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  chroma-ai:
+    image: chromadb/chroma
+    container_name: chroma-ai
+    expose:
+      - 8000
+    ports:
+      - 8010:8000
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+  cache-ai:
+    image: redis
+    container_name: cache-ai
+    expose:
+      - ${REDIS_PORT}
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+    volumes:
+      - ai-rds-data:/data
+      - ai.redis.conf:/usr/local/etc/redis/redis.conf
+    restart: unless-stopped
+    networks:
+      - shared-network
+
+volumes:
+  ai-rds-data:
+  ai.redis.conf:
+
+
+networks:
+  shared-network:
+    external: true

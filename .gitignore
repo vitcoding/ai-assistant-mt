@@ -1,0 +1,11 @@
+__pycache__/
+.vscode/
+.venv/
+*.env
+
+*temp/
+*_example
+data_state.json
+main.log
+.idea
+

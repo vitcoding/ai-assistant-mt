@@ -1,0 +1,63 @@
+name: fastapi-search-service
+
+services:
+  mt-data-db:
+    image: postgres:16
+    container_name: ${POSTGRES_DB}
+    env_file:
+      - ./.env
+    volumes:
+      - movies-database:/var/lib/postgresql/data
+      - ./data/database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    expose:
+      - ${POSTGRES_PORT}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    restart: always
+
+  mt-search-db:
+    image: elasticsearch:8.6.2
+    container_name: ${ELASTICSEARCH_DB}
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: -Xms150m -Xmx150m
+    env_file:
+      - ./.env
+    volumes:
+      - mt-search-data:/usr/share/elasticsearch/data
+    expose:
+      - ${ELASTICSEARCH_PORT}
+    ports:
+      - ${ELASTICSEARCH_PORT}:${ELASTICSEARCH_PORT}
+    restart: always
+
+  mt-etl:
+    build: ./etl
+    env_file:
+      - ./.env
+    depends_on:
+      - mt-data-db
+      - mt-search-db
+      - mt-cache
+
+  mt-cache:
+    image: redis
+    container_name: ${REDIS_DB}
+    expose:
+      - ${REDIS_PORT}
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+    volumes:
+      - mt-cache-data:/data
+      - mt.redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+
+volumes:
+  movies-database:
+  mt-search-data:
+  etl-data:
+  mt-cache-data:
+  mt.redis.conf:
+
+

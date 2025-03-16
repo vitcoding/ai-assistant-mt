@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>ИИ чат</title>
+    <link rel="stylesheet" href="/static/styles/chat_ai.css">
+</head>
+
+<body>
+    <section class="chat_header">
+        <div class="wrapper">
+            <div class="header__about">
+                <img src="/static/images/chat/menu_main.svg" alt="Меню" class="icon_menu" onclick="toggleMenu()">
+                <h1>Чат с ИИ Ассистентом</h1>
+            </div>
+            <div class="header__parameters expanded" id="menuContent">
+                <div class="header__chat_params" id="parameters">
+                    <label>Chat ID: {{ chat_id }}</label>
+                    <label>Chat topic: <input type="text" id="chatTopic" autocomplete="off" value="Topic" /></label>
+                </div>
+                <div class="header__model" id="parameters">
+                    <select id="dropdownModel">
+                        {% for item in models %}
+                        <option value="{{ loop.index }}" {% if loop.first %}selected{% endif %}>{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="dropdown"> - LLM модель</label>
+                </div>
+                <div class="header__language" id="parameters">
+                    <select id="dropdownLanguage">
+                        {% for item in languages %}
+                        <option value="{{ loop.index }}" {% if loop.first %}selected{% endif %}>{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="dropdown"> - язык, на котором будет отвечать ассистент</label>
+                </div>
+                <div class="header__checkbox_rag_sound">
+                    <div class="header__use_rag" id="parameters">
+                        <input type="checkbox" id="checkboxRag" name="use_rag">
+                        <label for="checkboxRag"> - использовать RAG</label>
+                    </div>
+                    <div class="header__use_sound" id="parameters">
+                        <input type="checkbox" id="checkboxSound" name="use_sound" checked>
+                        <label for="checkboxSound"> - озвучивать сообщения ИИ</label>
+                    </div>
+                </div>
+                <button onclick="connect(event)" id="connectButton">Начать новый чат</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="chat_body" id="chatBody">
+        <div class="wrapper">
+            <div class="message_items">
+                <div id='messages'>
+                </div>
+                <div class="temporary">
+                    <div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="chat_message">
+        <div class="wrapper">
+            <form action="" onsubmit="sendMessage(event)" class="form_message">
+                <div class="send_message">
+                    <textarea id="messageText" placeholder="Сообщение..."></textarea>
+                    <button id="recordButton"></button>
+                    <button id="sendMessageButton">Отправить</button>
+                </div>
+            </form>
+            <a id="downloadLink" download="recorded-audio.wav"></a>
+        </div>
+    </section>
+
+    <script>
+        const serviceHost = "{{ service_host }}"
+        const chatId = "{{ chat_id }}";
+        const previousChat = "{{ previous_chat }}"
+    </script>
+    <script src="/static/js/chat_ai.js"></script>
+    <script src="/static/js/audio_message.js"></script>
+    <script src="/static/js/audio_play.js"></script>
+</body>
+
+</html>

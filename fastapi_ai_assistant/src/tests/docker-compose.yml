@@ -1,0 +1,54 @@
+name: test-ai
+
+services:
+  cache-ai:
+    image: redis
+    env_file:
+      - ../../.env
+    expose:
+      - 6379
+    volumes:
+      - test-rds-data:/data
+      - tests.redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+    networks:
+      - test-network
+
+  ai_assistant-nginx:
+    image: nginx:alpine3.18
+    expose:
+      - 80
+    volumes:
+      - ../../data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - test-network
+
+  ai_assistant_api:
+    build: ../../.
+    expose:
+      - 8000
+    env_file:
+      - ../../.env
+    depends_on:
+      - ai_assistant-nginx
+    networks:
+      - test-network
+
+  test_service:
+    build: .
+    container_name: tests
+    depends_on:
+      - ai_assistant_api
+    env_file: .env.example
+    networks:
+      - test-network
+
+volumes:
+  test-rds-data:
+  tests.redis.conf:
+
+
+networks:
+  test-network:
+    external: true

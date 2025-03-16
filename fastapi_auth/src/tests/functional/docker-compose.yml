@@ -1,0 +1,55 @@
+name: test-auth-service
+
+services:
+  auth-db:
+    image: postgres:16
+    container_name: postgres
+    env_file:
+      - ../../../.env
+    volumes:
+      - auth-database:/var/lib/postgresql/data
+    expose:
+      - 5432
+    restart: always
+
+  auth-cache:
+    image: redis
+    container_name: redis
+    expose:
+      - 6379
+    volumes:
+      - rds-data:/data
+      - redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+
+  auth-nginx:
+    image: nginx:alpine3.18
+    expose:
+      - 80
+    volumes:
+      - ../../../data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../../data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+
+  auth-service:
+    build: ../../../.
+    container_name: auth-service
+    env_file:
+      - ../../../.env
+    expose:
+      - 8000
+    depends_on:
+      - auth-db
+      - auth-cache
+      - auth-nginx
+
+  test_service:
+    build: .
+    container_name: tests
+    depends_on:
+      - auth-service
+    env_file: .env
+
+volumes:
+  auth-database:
+  rds-data:
+  redis.conf:
