@@ -17,6 +17,12 @@ class GlobalConfig(BaseSettings):
     base_dir: str = Field(
         default=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )
+    service_host: str = Field(default="127.0.0.1")
+    service_port: int = Field(default=8005)
+
+    @property
+    def ai_service_host(self) -> str:
+        return f"{self.service_host}:{self.service_port}"
 
 
 # logging settings

@@ -48,7 +48,7 @@ async function connect(event) {
     }
 
     ws = new WebSocket(
-        "ws://localhost:8005/api/v1/chat_ai/" +
+        "ws://" + serviceHost + "/api/v1/chat_ai/" +
         chatId +
         "/ws?chat_topic=" + chat_topic.value +
         "&model_index=" + model_index.value +

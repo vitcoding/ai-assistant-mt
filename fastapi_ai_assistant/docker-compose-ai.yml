@@ -26,25 +26,6 @@ services:
     networks:
       - shared-network
 
-  cache-ai:
-    image: redis
-    container_name: cache-ai
-    expose:
-      - ${REDIS_PORT}
-    ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
-    volumes:
-      - ai-rds-data:/data
-      - ai.redis.conf:/usr/local/etc/redis/redis.conf
-    restart: unless-stopped
-    networks:
-      - shared-network
-
-volumes:
-  ai-rds-data:
-  ai.redis.conf:
-
-
 networks:
   shared-network:
     external: true

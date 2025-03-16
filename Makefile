@@ -1,9 +1,9 @@
+# ai assistant service api
+# http://localhost:8005/api/v1/chat_ai/
 # auth service api
 # http://localhost:8001/api/openapi
 # search service (movie theatre service) api
 # http://localhost:8000/api/openapi
-# ai assistant service api
-# http://localhost:8005/api/v1/chat_ai/
 
 
 # auth
@@ -18,10 +18,10 @@ MT-SERVICE-NAME = mt-search-service
 AI-DC = fastapi_ai_assistant/docker-compose-ai.yml
 AI-NAME = ai
 AI-SERVICE-NAME = ai_assistant_api
-# ollama service
-OLLAMA-DC = ollama_ai/docker-compose-ollama.yml
-OLLAMA-NAME = ollama
-OLLAMA-SERVICE-NAME = ollama-ai
+# ai infrastructure
+AIINFRA-DC = aI_infrastructure/docker-compose-aiinfra.yml
+AIINFRA-NAME = ollama
+AIINFRA-SERVICE-NAME = ollama-ai
 
 
 # network
@@ -33,26 +33,26 @@ net-rm:
 # all services
 up:
 	make net-create
+	make up-$(AIINFRA-NAME)
 	make up-$(AUTH-NAME)
-	make up-$(OLLAMA-NAME)
-	make up-$(AI-NAME)
 	make up-$(MT-NAME)
+	make up-$(AI-NAME)
 destroy:
 	make destroy-$(AI-NAME)
-	make destroy-$(OLLAMA-NAME)
 	make destroy-$(MT-NAME)
 	make destroy-$(AUTH-NAME)
+	make destroy-$(AIINFRA-NAME)
 	make net-rm
 stop:
 	make stop-$(AI-NAME)
-	make stop-$(OLLAMA-NAME)
 	make stop-$(MT-NAME)
 	make stop-$(AUTH-NAME)
+	make stop-$(AIINFRA-NAME)
 start:
+	make start-$(AIINFRA-NAME)
 	make start-$(AUTH-NAME)
-	make start-$(OLLAMA-NAME)
-	make start-$(AI-NAME)
 	make start-$(MT-NAME)
+	make start-$(AI-NAME)
 
 
 # ai assistant service
@@ -85,28 +85,28 @@ start-$(AI-NAME):
 # 	docker compose -f fastapi_ai_assistant/src/tests/functional/docker-compose.yml down -v
 # 	make net-rm
 
-# ollama service
-# OLLAMA-NAME = ollama
-up-$(OLLAMA-NAME):
-	docker compose -f $(OLLAMA-DC) up -d --build --force-recreate
-destroy-$(OLLAMA-NAME):
-	docker compose -f $(OLLAMA-DC) down -v
-rebuild-$(OLLAMA-NAME):
-	docker compose -f $(OLLAMA-DC) stop $(OLLAMA-SERVICE-NAME)
-	docker compose -f $(OLLAMA-DC) rm -f $(OLLAMA-SERVICE-NAME)
-	docker compose -f $(OLLAMA-DC) build $(OLLAMA-SERVICE-NAME)
-	docker compose -f $(OLLAMA-DC) up -d $(OLLAMA-SERVICE-NAME)
-# docker logs -f $(OLLAMA-SERVICE-NAME)
+# ai_infrastructure
+# AIINFRA-NAME = ollama
+up-$(AIINFRA-NAME):
+	docker compose -f $(AIINFRA-DC) up -d --build --force-recreate
+destroy-$(AIINFRA-NAME):
+	docker compose -f $(AIINFRA-DC) down -v
+rebuild-$(AIINFRA-NAME):
+	docker compose -f $(AIINFRA-DC) stop $(AIINFRA-SERVICE-NAME)
+	docker compose -f $(AIINFRA-DC) rm -f $(AIINFRA-SERVICE-NAME)
+	docker compose -f $(AIINFRA-DC) build $(AIINFRA-SERVICE-NAME)
+	docker compose -f $(AIINFRA-DC) up -d $(AIINFRA-SERVICE-NAME)
+# docker logs -f $(AIINFRA-SERVICE-NAME)
 
-stop-$(OLLAMA-NAME):
-	docker compose -f $(OLLAMA-DC) stop
-start-$(OLLAMA-NAME):
-	docker compose -f $(OLLAMA-DC) start
-# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama pull gemma3:4b
-# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama pull gemma3:12b
-# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama run gemma3:4b
-# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama list
-# docker compose -f ollama_ai/docker-compose-ollama.yml exec -it ollama-ai ollama rm llama3.3
+stop-$(AIINFRA-NAME):
+	docker compose -f $(AIINFRA-DC) stop
+start-$(AIINFRA-NAME):
+	docker compose -f $(AIINFRA-DC) start
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfraa.yml exec -it ollama-ai ollama list
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama rm llama3.3
 
 
 # auth service
@@ -179,3 +179,5 @@ etl-prj:
 # other
 dc-prune:
 	docker system prune -a -f
+dc-volume-prune:
+	docker volume prune -f

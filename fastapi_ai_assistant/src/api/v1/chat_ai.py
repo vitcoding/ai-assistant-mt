@@ -16,7 +16,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from core.config import templates
+from core.config import config, templates
 from core.logger import log
 from secure import api_key_schema
 from secure.auth import UpgradeAPIKeyCookie
@@ -63,6 +63,7 @@ async def get(
         request,
         "chat_ai.html",
         context={
+            "service_host": config.globals.ai_service_host,
             "chat_id": chat_id,
             "models": MODELS,
             "languages": LANGUAGES,
