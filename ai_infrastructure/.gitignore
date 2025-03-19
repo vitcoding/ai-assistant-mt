@@ -1,3 +1,6 @@
+chroma/*
+!chroma/chroma_db_data.md
+
 ollama/id*
 ollama/history*
 ollama/models/

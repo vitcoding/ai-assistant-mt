@@ -19,7 +19,7 @@ AI-DC = fastapi_ai_assistant/docker-compose-ai.yml
 AI-NAME = ai
 AI-SERVICE-NAME = ai_assistant_api
 # ai infrastructure
-AIINFRA-DC = aI_infrastructure/docker-compose-aiinfra.yml
+AIINFRA-DC = ai_infrastructure/docker-compose-aiinfra.yml
 AIINFRA-NAME = ollama
 AIINFRA-SERVICE-NAME = ollama-ai
 
@@ -105,11 +105,11 @@ stop-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) stop
 start-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) start
-# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
-# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
-# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
-# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama list
-# docker compose -f aI_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama rm llama3.3
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama list
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama rm llama3.3
 
 
 # auth service
@@ -188,7 +188,7 @@ dc-volume-prune:
 
 ### ai assistant debug mode
 # ai infrastructure
-AIINFRA-DEBUG-DC = aI_infrastructure/docker-compose-aiinfra.debug.yml
+AIINFRA-DEBUG-DC = ai_infrastructure/docker-compose-aiinfra.debug.yml
 AIINFRA-DEBUG-NAME = ollama-debug
 
 # ai_infrastructure (debug)

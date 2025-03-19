@@ -21,6 +21,8 @@ services:
   chroma-ai:
     image: chromadb/chroma
     container_name: chroma-ai
+    volumes:
+      - ./chroma:/chroma/chroma
     expose:
       - 8000
     ports:
