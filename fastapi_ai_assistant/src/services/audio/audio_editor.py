@@ -4,6 +4,8 @@ import numpy as np
 from pydub import AudioSegment
 from torch import Tensor
 
+MAX_INT16_VALUE = 32767
+
 
 class AudioEditor:
     """A class for work with audio data."""
@@ -49,7 +51,7 @@ class AudioEditor:
         """Converts data from Tensor to AudioSegment."""
 
         audio = audio.numpy()
-        audio *= 32767 / np.max(np.abs(audio))
+        audio *= MAX_INT16_VALUE / np.max(np.abs(audio))
         audio = audio.astype(np.int16)
 
         audio_segment = AudioSegment(

@@ -1,6 +1,7 @@
 import os
 from typing import Annotated
 
+from aiofile import async_open
 from fastapi import (
     APIRouter,
     Depends,
@@ -18,6 +19,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 
 from core.config import config, templates
 from core.logger import log
+from schemas.responses import AudioUploadResponse
 from secure import api_key_schema
 from secure.auth import UpgradeAPIKeyCookie
 from services.audio.speech_to_text import SpeechToText
@@ -141,6 +143,7 @@ async def websocket_endpoint(
 @router.post(
     "/upload-audio",
     status_code=status.HTTP_200_OK,
+    response_model=AudioUploadResponse,
     summary="Upload audio",
     description="Upload an audio file of an user message",
     response_description="A name of an audio file",
@@ -148,7 +151,7 @@ async def websocket_endpoint(
 async def upload_audio(
     uploaded_audio: UploadFile = File(...),
     cache: CacheService = Depends(get_cache_service),
-) -> dict[str, str]:
+) -> AudioUploadResponse:
     audio_file_name = uploaded_audio.filename
 
     path_manager = PathManager()
@@ -159,11 +162,11 @@ async def upload_audio(
     chat_id = path_manager.chat_id
     await cache.set(f"chat_id: {chat_id}: user_audio", file_path)
 
-    with open(file_path, "wb") as buffer:
+    async with async_open(file_path, "wb") as buffer:
         while contents := uploaded_audio.file.read(1024 * 16):
-            buffer.write(contents)
+            await buffer.write(contents)
 
-    return {"filename": file_name}
+    return AudioUploadResponse(filename=file_name)
 
 
 @router.get(

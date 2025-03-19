@@ -3,7 +3,8 @@ from logging import config as logging_config
 
 from dotenv import load_dotenv
 from fastapi.templating import Jinja2Templates
-from pydantic.v1 import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from core.logger import LOGGING
 
@@ -29,18 +30,17 @@ class GlobalConfig(BaseSettings):
 logging_config.dictConfig(LOGGING)
 
 
-class GPTConfig(BaseSettings):
-    host: str = Field(default="0.0.0.0:11434")
-    model: str = Field(default="llama3.2")
-
-    class Config:
-        env_prefix = "GPT_"
-
-
 class LLMModelConfig(BaseSettings):
     """
     LLM model configuration settings.
     """
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="ollama_",
+        extra="ignore",
+    )
 
     host: str = Field(default="127.0.0.1")
     port: int = Field(default=11434)
@@ -48,37 +48,46 @@ class LLMModelConfig(BaseSettings):
     provider: str = Field(default="ollama")
     embedding_model: str = Field(default="evilfreelancer/enbeddrus")
 
-    class Config:
-        env_prefix = "OLLAMA_"
-
 
 class VectorDB(BaseSettings):
     """
     Vector db configuration settings.
     """
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="chroma_",
+        extra="ignore",
+    )
+
     host: str = Field(default="127.0.0.1")
     port: int = Field(default=8010)
-
-    class Config:
-        env_prefix = "CHROMA_"
 
 
 class CacheConfig(BaseSettings):
     """Configuration settings for the cache storage."""
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="redis_",
+        extra="ignore",
+    )
+
     host: str = Field(default="127.0.0.1")
     port: int = Field(default=6379)
 
-    class Config:
-        env_prefix = "REDIS_"
-
 
 class UrlConfig(BaseSettings):
-    search: str = Field(default="http://0.0.0.0:8000")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="url_service_",
+        extra="ignore",
+    )
 
-    class Config:
-        env_prefix = "URL_SERVICE_"
+    search: str = Field(default="http://0.0.0.0:8000")
 
 
 class AuthConfig(BaseSettings):
@@ -87,13 +96,15 @@ class AuthConfig(BaseSettings):
     and login URL.
     """
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="auth_",
+        extra="ignore",
+    )
+
     secret_key: str = Field(default="gPaFf9ldf-8lgUFePhe", env="SECRET_KEY")
     algoritm: str = Field(default="HS256", env="ALGORITHM")
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        env_prefix = "AUTH_"
 
 
 class Config(BaseSettings):
@@ -102,7 +113,6 @@ class Config(BaseSettings):
     """
 
     globals: GlobalConfig = GlobalConfig()
-    gpt: GPTConfig = GPTConfig()
     llm: LLMModelConfig = LLMModelConfig()
     vector_db: VectorDB = VectorDB()
     cache: CacheConfig = CacheConfig()

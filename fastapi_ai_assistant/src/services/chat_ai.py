@@ -17,7 +17,6 @@ from promts.chat_ai_templates import prompt_template
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
-from services.cache import CacheService, get_cache_service
 from services.tools.message_template import get_message_header
 from services.tools.path_manager import PathManager
 
