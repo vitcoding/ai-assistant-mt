@@ -12,8 +12,8 @@ from core.logger import log
 from schemas.auth import AuthData
 
 # in seconds
-ACCESS_EXPIRE = 30 * 60  # 30 * 60
-REFRESH_EXPIRE = 1 * 60 * 60  # 10 * 60 * 60 * 24
+ACCESS_EXPIRE = 1 * 60 * 60 * 24  # 30 * 60
+REFRESH_EXPIRE = 10 * 60 * 60 * 24  # 10 * 60 * 60 * 24
 
 
 class TokenService:
