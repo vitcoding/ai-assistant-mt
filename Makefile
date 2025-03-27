@@ -208,24 +208,41 @@ stop-$(AIINFRA-DEBUG-NAME):
 start-$(AIINFRA-DEBUG-NAME):
 	docker compose -f $(AIINFRA-DEBUG-DC) start
 
-# launch in debug mode
-up-debug:
+# launch in debug mode (all services)
+up-debug-all:
 	make net-create
 	make up-$(AIINFRA-DEBUG-NAME)
 	make up-$(AUTH-NAME)
 	make up-$(MT-NAME)
 	make ai-prj
-destroy-debug:
+destroy-debug-all:
 	make destroy-$(MT-NAME)
 	make destroy-$(AUTH-NAME)
 	make destroy-$(AIINFRA-DEBUG-NAME)
 	make net-rm
-stop-debug:
+stop-debug-all:
 	make stop-$(MT-NAME)
+	make stop-$(AUTH-NAME)
+	make stop-$(AIINFRA-DEBUG-NAME)
+start-debug-all:
+	make start-$(AIINFRA-DEBUG-NAME)
+	make start-$(AUTH-NAME)
+	make start-$(MT-NAME)
+	make ai-prj
+
+
+# launch in debug mode (without search service)
+up-debug:
+	make net-create
+	make up-$(AIINFRA-DEBUG-NAME)
+	make up-$(AUTH-NAME)
+destroy-debug:
+	make destroy-$(AUTH-NAME)
+	make destroy-$(AIINFRA-DEBUG-NAME)
+	make net-rm
+stop-debug:
 	make stop-$(AUTH-NAME)
 	make stop-$(AIINFRA-DEBUG-NAME)
 start-debug:
 	make start-$(AIINFRA-DEBUG-NAME)
 	make start-$(AUTH-NAME)
-	make start-$(MT-NAME)
-	make ai-prj
