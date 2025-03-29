@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Sequence
 
-import ollama
 from fastapi import WebSocket
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import BaseMessage, HumanMessage, trim_messages
@@ -12,11 +11,11 @@ from typing_extensions import Annotated, TypedDict
 
 from core.config import config
 from core.logger import log
-from db.vector_db import get_vector_db_client
 from promts.chat_ai_templates import prompt_template
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
+from services.retriever.ollama_retriever import get_docs
 from services.tools.message_template import get_message_header
 from services.tools.path_manager import PathManager
 
@@ -157,41 +156,6 @@ class ChatAI:
         response = await self.llm.ainvoke(prompt)
         return {"messages": response}
 
-    async def get_docs(self, input_message) -> list[str]:
-        """Gets relevant docs for retrieved context."""
-
-        vector_db_client = await get_vector_db_client()
-        collection = await vector_db_client.get_or_create_collection(
-            CHROMA_COLLECTION_NAME
-        )
-        queryembed = ollama.embeddings(
-            model=EMBEDDING_MODEL_NAME,
-            prompt=input_message,
-        )["embedding"]
-
-        relevant_docs_data = await collection.query(
-            query_embeddings=[queryembed],
-            n_results=EMBEDDING_SEARCH_RESULTS,
-        )
-        log.debug(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
-
-        metadatas = relevant_docs_data["metadatas"][0]
-        sources = [metadata.get("source") for metadata in metadatas]
-        retrieved_docs = relevant_docs_data["documents"][0]
-
-        retrieved_data = [
-            data
-            for data in zip(
-                range(1, len(sources) + 1), sources, retrieved_docs
-            )
-        ]
-        relevant_docs = [
-            f"The retrieved document {data[0]}:\nSource: '{data[1]}'\n"
-            f"The context of the document:\n'{data[2]}'"
-            for data in retrieved_data
-        ]
-        return relevant_docs
-
     async def send_message(
         self, message: str, role: str | None = None
     ) -> None:
@@ -237,7 +201,12 @@ class ChatAI:
             # docs content
             docs_list = ""
             if self.use_rag:
-                docs_list = await self.get_docs(input_message)
+                docs_list = await get_docs(
+                    input_message,
+                    CHROMA_COLLECTION_NAME,
+                    EMBEDDING_MODEL_NAME,
+                    EMBEDDING_SEARCH_RESULTS,
+                )
             if isinstance(docs_list, (list, tuple)):
                 docs_system_message = (
                     "\n\n\nUse the retrieved documents of retrieved context "
