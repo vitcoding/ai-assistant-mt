@@ -23,7 +23,7 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
@@ -66,11 +66,6 @@ formatter = logging.Formatter(
     "\n# %(levelname)-8s [%(asctime)s] - %(filename)s:"
     "%(lineno)d - %(name)s: \n%(message)s"
 )
-
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(formatter)
-log.addHandler(console_handler)
 
 file_path_info = f"./_temp/logs/main_info.log"
 file_path_debug = f"./_temp/logs/main_debug.log"
