@@ -1,40 +1,11 @@
-import chromadb
-from chromadb.config import Settings
-from langchain_chroma import Chroma
 from langchain_core.documents.base import Document
 from langchain_core.tools import tool
-from langchain_ollama import OllamaEmbeddings
 
-from core.config import config
 from core.logger import log
+from db.vector_db import get_vector_store
 
-EMBEDDING_MODEL_NAME = config.llm.embedding_model
 CHROMA_COLLECTION_NAME = "films_mt"
 EMBEDDING_SEARCH_RESULTS = 5
-
-
-embeddings = OllamaEmbeddings(
-    model=EMBEDDING_MODEL_NAME,
-    base_url=f"http://{config.llm.host}:{config.llm.port}",
-)
-
-chroma_settings = Settings(
-    chroma_server_host=config.vector_db.host,
-    chroma_server_http_port=config.vector_db.port,
-    anonymized_telemetry=False,
-)
-
-chroma = chromadb.HttpClient(
-    host=config.vector_db.host,
-    port=config.vector_db.port,
-)
-
-vector_store = Chroma(
-    collection_name=CHROMA_COLLECTION_NAME,
-    embedding_function=embeddings,
-    client=chroma,
-    # client_settings=chroma_settings,
-)
 
 
 @tool(response_format="content_and_artifact")
@@ -43,6 +14,7 @@ async def retrieve(query: str) -> tuple[str, list[Document]]:
 
     log.info(f"{__name__}: query: \n{query}")
 
+    vector_store = get_vector_store(CHROMA_COLLECTION_NAME)
     retrieved_docs = await vector_store.asimilarity_search(
         query, k=EMBEDDING_SEARCH_RESULTS
     )
