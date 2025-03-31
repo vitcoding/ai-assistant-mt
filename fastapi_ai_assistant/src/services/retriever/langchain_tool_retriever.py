@@ -15,12 +15,12 @@ EMBEDDING_SEARCH_RESULTS = 5
 
 embeddings = OllamaEmbeddings(
     model=EMBEDDING_MODEL_NAME,
-    base_url="http://localhost:11434",
+    base_url=f"http://{config.llm.host}:{config.llm.port}",
 )
 
 chroma_settings = Settings(
-    chroma_server_host="localhost",
-    chroma_server_http_port=8010,
+    chroma_server_host=config.vector_db.host,
+    chroma_server_http_port=config.vector_db.port,
     anonymized_telemetry=False,
 )
 
@@ -50,7 +50,7 @@ async def retrieve(query: str) -> tuple[str, list[Document]]:
     serialized = "\n\n".join(
         (
             f"The retrieved document {data[0]}:"
-            f"\nSource: {data[1].metadata["source"]}"
+            f"\nSource: {data[1].metadata['source']}"
             f"\nContent: {data[1].page_content}"
         )
         for data in zip(range(1, len(retrieved_docs) + 1), retrieved_docs)
