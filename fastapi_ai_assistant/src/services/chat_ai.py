@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Sequence
 
@@ -12,12 +13,13 @@ from langchain_core.messages import (
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import ToolNode
 from typing_extensions import Annotated, TypedDict
 
 from core.config import config
 from core.logger import log
-from promts.chat_ai_templates import prompt_template
+from prompts.chat_ai_templates import prompt_template
+from prompts.rag_decision import get_prompt_decision
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
@@ -92,6 +94,18 @@ class ChatAI:
         self.graph = self._set_workflow()
         self.ai_audio_file_name = None
 
+    def _tools_condition(self, state: State) -> str:
+        """Sets tools conditions."""
+
+        last_message = state["messages"][-1]
+
+        if getattr(last_message, "rag_required", True) == False:
+            return "generate"
+        elif hasattr(last_message, "tool_calls") and last_message.tool_calls:
+            return "tools"
+
+        return "tools"
+
     def _set_workflow(self) -> StateGraph:
         """The chat workfow settings."""
 
@@ -127,8 +141,8 @@ class ChatAI:
             self.graph_builder.set_entry_point("query_or_respond")
             self.graph_builder.add_conditional_edges(
                 "query_or_respond",
-                tools_condition,
-                {END: END, "tools": "tools"},
+                self._tools_condition,
+                {END: END, "tools": "tools", "generate": "generate"},
             )
             self.graph_builder.add_edge("tools", "generate")
             self.graph_builder.add_edge("generate", END)
@@ -167,10 +181,28 @@ class ChatAI:
 
     async def _query_or_respond(self, state: State):
         """Generate tool call for retrieval or respond."""
-        llm_with_tools = self.llm.bind_tools([retrieve])
-        response = await llm_with_tools.ainvoke(state["messages"])
-        # MessagesState appends messages to state instead of overwriting
-        return {"messages": response}
+
+        prompt_decision = get_prompt_decision(state["messages"][-1].content)
+
+        log.debug(
+            f"{__name__}: {self._query_or_respond.__name__}: "
+            f"\nprompt_decision: \n{prompt_decision}\n"
+        )
+
+        response = await self.llm.ainvoke(prompt_decision)
+        decision = json.loads(response.content)
+
+        log.info(
+            f"{__name__}: {self._query_or_respond.__name__}: "
+            f"\nRAG decision: {decision}\n"
+        )
+
+        if decision["rag_decision"]:
+            llm_with_tools = self.llm.bind_tools([retrieve])
+            response = await llm_with_tools.ainvoke(state["messages"])
+            return {"messages": response}
+        else:
+            return {"messages": [AIMessage(content="", rag_required=False)]}
 
     async def _generate(self, state: State) -> dict[str, Any]:
         """Provides model call."""
@@ -295,7 +327,7 @@ class ChatAI:
         else:
             # stream
             message_list = []
-            async for chunc_data in self.graph.astream(
+            async for chunk_data in self.graph.astream(
                 {
                     "messages": HumanMessage(input_message),
                     "language": self.language,
@@ -305,13 +337,13 @@ class ChatAI:
                 stream_mode="messages",
                 config=self.chat_config,
             ):
-
-                # yield str(chunc_data)
                 if (
-                    chunc_data[0].type == "AIMessageChunk"
-                    and not chunc_data[0].tool_calls
+                    chunk_data[0].type == "AIMessageChunk"
+                    and not chunk_data[0].tool_calls
+                    # and chunk_data[0].content
+                    and chunk_data[1]["langgraph_node"] != "query_or_respond"
                 ):
-                    message_chunk = chunc_data[0].content
+                    message_chunk = chunk_data[0].content
                     message_list.append(message_chunk)
                     yield message_chunk
 

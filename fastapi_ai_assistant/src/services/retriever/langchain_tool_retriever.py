@@ -1,6 +1,7 @@
 import chromadb
 from chromadb.config import Settings
 from langchain_chroma import Chroma
+from langchain_core.documents.base import Document
 from langchain_core.tools import tool
 from langchain_ollama import OllamaEmbeddings
 
@@ -37,8 +38,8 @@ vector_store = Chroma(
 
 
 @tool(response_format="content_and_artifact")
-async def retrieve(query: str):
-    """Retrieve information related to a query."""
+async def retrieve(query: str) -> tuple[str, list[Document]]:
+    """Retrieves information related to a query."""
 
     log.info(f"{__name__}: query: \n{query}")
 
