@@ -14,6 +14,8 @@ async def get_docs(
 ) -> list[str]:
     """Gets relevant docs for retrieved context."""
 
+    log.debug(f"{__name__}: {get_docs.__name__}: run")
+
     vector_db_client = await get_vector_db_client()
     collection = await vector_db_client.get_or_create_collection(
         CHROMA_COLLECTION_NAME
@@ -27,7 +29,9 @@ async def get_docs(
         query_embeddings=[queryembed],
         n_results=EMBEDDING_SEARCH_RESULTS,
     )
-    log.debug(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
+
+    # for debug
+    # log.debug(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
 
     metadatas = relevant_docs_data["metadatas"][0]
     sources = [metadata.get("source") for metadata in metadatas]
@@ -38,8 +42,13 @@ async def get_docs(
         for data in zip(range(1, len(sources) + 1), sources, retrieved_docs)
     ]
     relevant_docs = [
-        f"The retrieved document {data[0]}:\nSource: '{data[1]}'\n"
-        f"The context of the document:\n'{data[2]}'"
+        f"The retrieved document {data[0]}:"
+        f"\nSource: {data[1]}"
+        f"\nThe context of the document:\n{data[2]}"
         for data in retrieved_data
     ]
+
+    # for debug
+    # log.debug(f"{__name__}: relevant_docs: \n{relevant_docs}")
+
     return relevant_docs

@@ -16,7 +16,8 @@ Examples where RAG is needed:
 - Questions about specific data (documents, articles, personal data).
 - Requests like "Find me information about X".
 
-User query: {user_input}
+User query:
+{user_input}
 
 Your response must be in JSON format:
 {{"rag_decision": true/false}}

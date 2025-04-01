@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timezone
+from json.decoder import JSONDecodeError
 from typing import Any, AsyncGenerator, Sequence
 
 from fastapi import WebSocket
@@ -36,7 +37,10 @@ MODEL_KWARGS = {
     "temperature": 0.3,
     "repetition_penalty": 1.2,
 }
+MAIN_MODEL_KWARGS = MODEL_KWARGS
+ANALYTICAL_MODEL_KWARGS = MODEL_KWARGS
 
+ANALYTICAL_MODEL_NAME = config.llm.analytical_model
 
 # Chat config params
 CHAT_MAX_TOKENS = 10_000
@@ -65,7 +69,7 @@ class ChatAI:
         self.websocket = websocket
         self.chat_id = chat_id
         self.chat_topic = chat_topic
-        self.model_name = model_name
+        self.main_model_name = model_name
         self.language = language
         self.use_rag = use_rag
         self.use_sound = use_sound
@@ -76,13 +80,21 @@ class ChatAI:
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()
         self.chat_timestamp = datetime.now(timezone.utc).isoformat()
-        self.llm = init_chat_model(
-            model=self.model_name, model_provider=PROVIDER, **MODEL_KWARGS
+        self.analytical_model_name = ANALYTICAL_MODEL_NAME
+        self.llm_analytical = init_chat_model(
+            model=self.analytical_model_name,
+            model_provider=PROVIDER,
+            **ANALYTICAL_MODEL_KWARGS,
+        )
+        self.llm_main = init_chat_model(
+            model=self.main_model_name,
+            model_provider=PROVIDER,
+            **MAIN_MODEL_KWARGS,
         )
         self.trimmer = trim_messages(
             max_tokens=CHAT_MAX_TOKENS,
             strategy="last",
-            token_counter=self.llm,
+            token_counter=self.llm_analytical,
             include_system=True,
             allow_partial=False,
             start_on="human",
@@ -113,7 +125,7 @@ class ChatAI:
 
         log.info(
             f"{__name__}: {self._set_workflow.__name__}: "
-            f"\nmodel setted: {self.model_name}"
+            f"\nmodel setted: {self.main_model_name}"
         )
         log.info(
             f"{__name__}: {self._set_workflow.__name__}: "
@@ -189,8 +201,19 @@ class ChatAI:
             f"\nprompt_decision: \n{prompt_decision}\n"
         )
 
-        response = await self.llm.ainvoke(prompt_decision)
-        decision = json.loads(response.content)
+        response = await self.llm_analytical.ainvoke(prompt_decision)
+        log.debug(
+            f"{__name__}: {self._query_or_respond.__name__}: "
+            f"\nresponse (prompt_decision): \n{response}\n"
+        )
+        try:
+            decision = json.loads(response.content)
+        except JSONDecodeError as err:
+            log.error(
+                f"{__name__}: {self._query_or_respond.__name__}: "
+                f"\nAn error '{type(err)}': {err}\n"
+            )
+            decision = {"rag_decision": False}
 
         log.info(
             f"{__name__}: {self._query_or_respond.__name__}: "
@@ -198,7 +221,7 @@ class ChatAI:
         )
 
         if decision["rag_decision"]:
-            llm_with_tools = self.llm.bind_tools([retrieve])
+            llm_with_tools = self.llm_analytical.bind_tools([retrieve])
             response = await llm_with_tools.ainvoke(state["messages"])
             return {"messages": response}
         else:
@@ -220,8 +243,7 @@ class ChatAI:
 
         # docs_content
         docs_system_message = (
-            "\n\n\nUse the retrieved documents of retrieved context "
-            "to answer the question."
+            "\n\n\nCheck the information in the retrieved documents from the retrieved context. If this information corresponds to the user's request, then rely on it when responding."
             "\n\nRetrieved context:\n\n"
         )
 
@@ -238,10 +260,10 @@ class ChatAI:
                 docs_content = f"{docs_system_message}{docs_text}"
         else:
             docs_content = ""
-        log.debug(
-            f"{__name__}: {self._generate.__name__}: "
-            f"\ndocs_content: \n{docs_content}\n"
-        )
+        # log.debug(
+        #     f"{__name__}: {self._generate.__name__}: "
+        #     f"\ndocs_content: \n{docs_content}\n"
+        # )
 
         trimmed_messages_filtered = []
         for message in trimmed_messages:
@@ -280,7 +302,7 @@ class ChatAI:
             f"\nprompt: \n{prompt_str}\n"
         )
 
-        response = await self.llm.ainvoke(prompt)
+        response = await self.llm_main.ainvoke(prompt)
         return {"messages": response}
 
     async def send_message(

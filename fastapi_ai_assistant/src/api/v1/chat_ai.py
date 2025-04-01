@@ -87,7 +87,9 @@ async def websocket_endpoint(
     use_sound: Annotated[bool, Query()],
     cache: CacheService = Depends(get_cache_service),
 ):
-    log.debug(f"{__name__}: {websocket_endpoint.__name__}: run")
+    log.debug(
+        f"{__name__}: {websocket_endpoint.__name__}: run\n\n{'='*30}\n\n"
+    )
 
     model_name = get_model_by_index(model_index - 1)
     language = get_langage_by_index(language_index - 1)

@@ -12,6 +12,7 @@ EMBEDDING_SEARCH_RESULTS = 5
 async def retrieve(query: str) -> tuple[str, list[Document]]:
     """Retrieves information related to a query."""
 
+    log.debug(f"{__name__}: retrieve: run")
     log.info(f"{__name__}: \n\nquery: \n{query}\n")
 
     vector_store = get_vector_store(CHROMA_COLLECTION_NAME)
@@ -23,12 +24,13 @@ async def retrieve(query: str) -> tuple[str, list[Document]]:
         (
             f"The retrieved document {data[0]}:"
             f"\nSource: {data[1].metadata['source']}"
-            f"\nContent: \n{data[1].page_content}"
+            f"\nThe context of the document: \n{data[1].page_content}"
         )
         for data in zip(range(1, len(retrieved_docs) + 1), retrieved_docs)
     )
 
+    # for debug
     # log.debug(f"{__name__}: relevant_docs_data: \n{retrieved_docs}\n")
-    log.debug(f"{__name__}: relevant_docs_data: \n{serialized}\n")
+    # log.debug(f"{__name__}: relevant_docs_data: \n{serialized}\n")
 
     return serialized, retrieved_docs
