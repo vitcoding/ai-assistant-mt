@@ -105,11 +105,14 @@ stop-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) stop
 start-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) start
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama list
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama rm llama3.3
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama pull gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama pull gemma3:12b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama run gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama list
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama rm llama3.3
+
+# for intel gpu
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama pull gemma2:9b
 
 
 # auth service
@@ -236,6 +239,7 @@ up-debug:
 	make net-create
 	make up-$(AIINFRA-DEBUG-NAME)
 	make up-$(AUTH-NAME)
+	make ai-prj
 destroy-debug:
 	make destroy-$(AUTH-NAME)
 	make destroy-$(AIINFRA-DEBUG-NAME)
@@ -246,3 +250,11 @@ stop-debug:
 start-debug:
 	make start-$(AIINFRA-DEBUG-NAME)
 	make start-$(AUTH-NAME)
+	make ai-prj
+
+# ollama cpu (debug)
+up-ollama-cpu:
+	docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml up -d --build --force-recreate
+destroy-ollama-cpu:
+	docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml down -v
+	
