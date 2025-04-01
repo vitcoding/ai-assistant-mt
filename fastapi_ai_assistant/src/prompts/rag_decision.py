@@ -12,6 +12,7 @@ Examples where RAG is NOT needed:
 
 Examples where RAG is needed:
 - Questions about retrieved context.
+- Questions about films.
 - Questions about specific data (documents, articles, personal data).
 - Requests like "Find me information about X".
 
