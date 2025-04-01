@@ -1,0 +1,28 @@
+FROM ollama/ollama
+
+# 1. Установка базовых зависимостей
+RUN apt-get update && apt-get install -y \
+    wget \
+    gpg \
+    clinfo \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Добавляем репозиторий Intel
+RUN wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor > /usr/share/keyrings/intel-gpg-key.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/intel-gpg-key.gpg] https://apt.repos.intel.com/oneapi all main" > /etc/apt/sources.list.d/oneAPI.list
+
+# 3. Устанавливаем необходимые компоненты
+RUN apt-get update && apt-get install -y \
+    intel-oneapi-runtime-libs \
+    intel-oneapi-runtime-opencl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Создаем необходимые симлинки
+RUN ln -s /usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1 /usr/lib/x86_64-linux-gnu/libze_intel_gpu.so && \
+    ln -s /opt/intel/oneapi/compiler/latest/linux/lib/libigdrcl.so /usr/lib/x86_64-linux-gnu/ && \
+    ln -s /opt/intel/oneapi/compiler/latest/linux/lib/libocloc.so /usr/lib/x86_64-linux-gnu/
+
+# 5. Настраиваем переменные окружения
+ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/opt/intel/oneapi/compiler/latest/linux/lib
+ENV OLLAMA_LLM_LIBRARY=opencl
+ENV ONEAPI_DEVICE_SELECTOR=level_zero:gpu

@@ -1,19 +1,33 @@
 services:
   ollama-ai:
-    image: ollama/ollama
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama-intel
     container_name: ollama-ai
-    devices:
-      - "/dev/dri/card1:/dev/dri/card1"
-      - "/dev/dri/renderD128:/dev/dri/renderD128"
-    # devices:
-    #   - /dev/dri
-    environment:
-      - LIBGL_ALWAYS_SOFTWARE=0
-    ########
-    volumes:
-      - ./ollama:/root/.ollama
     ports:
       - 11434:11434
+    volumes:
+      - ./ollama:/root/.ollama
+    # devices:
+    #   - "/dev/dri/renderD128:/dev/dri/renderD128"
+    #   - "/dev/dri/card1:/dev/dri/card1"
+    devices:
+      - /dev/dri:/dev/dri
+    environment:
+      - OLLAMA_DEBUG=1
+      - OLLAMA_INTEL_GPU=true
+    # - ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+    # - LIBGL_ALWAYS_SOFTWARE=0
+    # group_add:
+    #   - "44"
+    #   - "992"
+    privileged: true
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: intel
+    #           capabilities: [ gpu ]
     restart: unless-stopped
     networks:
       - shared-network
