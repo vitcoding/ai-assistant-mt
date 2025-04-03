@@ -74,8 +74,11 @@ class ChatAI:
         self.use_rag = use_rag
         self.use_sound = use_sound
         self.path_manager = path_manager
+
+        # retriever to use
         self.retriever = "langchain_tool"
         # self.retriever = "ollama"
+
         self.speaker = None
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()
@@ -260,6 +263,8 @@ class ChatAI:
                 docs_content = f"{docs_system_message}{docs_text}"
         else:
             docs_content = ""
+
+        # for debug
         # log.debug(
         #     f"{__name__}: {self._generate.__name__}: "
         #     f"\ndocs_content: \n{docs_content}\n"
@@ -294,6 +299,7 @@ class ChatAI:
                 f">>>\n{message.type}: {message.content}"
                 for message in prompt.messages
             ]
+            # for debug
             # [repr(message) for message in prompt.messages]
         )
         prompt_str = f"{'-'*30}\n{prompt_str}\n{'-'*30}\n"
@@ -354,7 +360,6 @@ class ChatAI:
                     "messages": HumanMessage(input_message),
                     "language": self.language,
                     "docs_content": "",
-                    # "docs_content": docs_content,
                 },
                 stream_mode="messages",
                 config=self.chat_config,
@@ -362,7 +367,6 @@ class ChatAI:
                 if (
                     chunk_data[0].type == "AIMessageChunk"
                     and not chunk_data[0].tool_calls
-                    # and chunk_data[0].content
                     and chunk_data[1]["langgraph_node"] != "query_or_respond"
                 ):
                     message_chunk = chunk_data[0].content
