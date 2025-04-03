@@ -1,27 +1,33 @@
+import json
 from datetime import datetime, timezone
+from json.decoder import JSONDecodeError
 from typing import Any, AsyncGenerator, Sequence
 
-import ollama
 from fastapi import WebSocket
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import BaseMessage, HumanMessage, trim_messages
+from langchain_core.messages import (
+    AIMessage,
+    BaseMessage,
+    HumanMessage,
+    trim_messages,
+)
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import START, StateGraph
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode
 from typing_extensions import Annotated, TypedDict
 
 from core.config import config
 from core.logger import log
-from db.vector_db import get_vector_db_client
-from promts.chat_ai_templates import prompt_template
+from prompts.chat_ai_templates import prompt_template
+from prompts.rag_decision import get_prompt_decision
 from services.audio.text_to_speech.en_tts import TextToSpeechEn
 from services.audio.text_to_speech.ru_tts import TextToSpeechRu
 from services.audio.text_to_speech.tts_speak import speak
+from services.retriever.langchain_tool_retriever import retrieve
+from services.retriever.ollama_retriever import get_docs
 from services.tools.message_template import get_message_header
 from services.tools.path_manager import PathManager
-
-EMBEDDING_MODEL_NAME = config.llm.embedding_model
-CHROMA_COLLECTION_NAME = "films_mt"
 
 # LLM
 PROVIDER = config.llm.provider
@@ -31,10 +37,10 @@ MODEL_KWARGS = {
     "temperature": 0.3,
     "repetition_penalty": 1.2,
 }
+MAIN_MODEL_KWARGS = MODEL_KWARGS
+ANALYTICAL_MODEL_KWARGS = MODEL_KWARGS
 
-# Embedding
-EMBEDDING_MODEL_NAME = config.llm.embedding_model
-EMBEDDING_SEARCH_RESULTS = 5
+ANALYTICAL_MODEL_NAME = config.llm.analytical_model
 
 # Chat config params
 CHAT_MAX_TOKENS = 10_000
@@ -63,31 +69,57 @@ class ChatAI:
         self.websocket = websocket
         self.chat_id = chat_id
         self.chat_topic = chat_topic
-        self.model_name = model_name
+        self.main_model_name = model_name
         self.language = language
         self.use_rag = use_rag
         self.use_sound = use_sound
         self.path_manager = path_manager
+
+        # retriever to use
+        self.retriever = "langchain_tool"
+        # self.retriever = "ollama"
+
         self.speaker = None
         self.user_role_name = self._get_user_role_name()
         self.ai_role_name = self._get_ai_role_name()
         self.chat_timestamp = datetime.now(timezone.utc).isoformat()
-        self.llm = init_chat_model(
-            model=self.model_name, model_provider=PROVIDER, **MODEL_KWARGS
+        self.analytical_model_name = ANALYTICAL_MODEL_NAME
+        self.llm_analytical = init_chat_model(
+            model=self.analytical_model_name,
+            model_provider=PROVIDER,
+            **ANALYTICAL_MODEL_KWARGS,
+        )
+        self.llm_main = init_chat_model(
+            model=self.main_model_name,
+            model_provider=PROVIDER,
+            **MAIN_MODEL_KWARGS,
         )
         self.trimmer = trim_messages(
             max_tokens=CHAT_MAX_TOKENS,
             strategy="last",
-            token_counter=self.llm,
+            token_counter=self.llm_analytical,
             include_system=True,
             allow_partial=False,
             start_on="human",
         )
         self.graph_builder = StateGraph(state_schema=State)
         self.memory = MemorySaver()
+        self.tools = ToolNode([retrieve])
         self.chat_config = {"configurable": {"thread_id": self.chat_id}}
         self.graph = self._set_workflow()
         self.ai_audio_file_name = None
+
+    def _tools_condition(self, state: State) -> str:
+        """Sets tools conditions."""
+
+        last_message = state["messages"][-1]
+
+        if getattr(last_message, "rag_required", True) == False:
+            return "generate"
+        elif hasattr(last_message, "tool_calls") and last_message.tool_calls:
+            return "tools"
+
+        return "tools"
 
     def _set_workflow(self) -> StateGraph:
         """The chat workfow settings."""
@@ -96,7 +128,7 @@ class ChatAI:
 
         log.info(
             f"{__name__}: {self._set_workflow.__name__}: "
-            f"\nmodel setted: {self.model_name}"
+            f"\nmodel setted: {self.main_model_name}"
         )
         log.info(
             f"{__name__}: {self._set_workflow.__name__}: "
@@ -114,9 +146,28 @@ class ChatAI:
         elif self.language == "English":
             self.speaker = TextToSpeechEn()
 
-        self.graph_builder.add_edge(START, "model")
-        self.graph_builder.add_node("model", self._call_model)
+        if self.use_rag and self.retriever == "langchain_tool":
+            self.graph_builder.add_node(
+                "query_or_respond", self._query_or_respond
+            )
+            self.graph_builder.add_node("tools", self.tools)
+            self.graph_builder.add_node("generate", self._generate)
 
+            self.graph_builder.set_entry_point("query_or_respond")
+            self.graph_builder.add_conditional_edges(
+                "query_or_respond",
+                self._tools_condition,
+                {END: END, "tools": "tools", "generate": "generate"},
+            )
+            self.graph_builder.add_edge("tools", "generate")
+            self.graph_builder.add_edge("generate", END)
+
+            graph = self.graph_builder.compile(checkpointer=self.memory)
+            log.debug(f"{__name__}: {self._set_workflow.__name__}: end")
+            return graph
+
+        self.graph_builder.add_edge(START, "generate")
+        self.graph_builder.add_node("generate", self._generate)
         graph = self.graph_builder.compile(checkpointer=self.memory)
         log.debug(f"{__name__}: {self._set_workflow.__name__}: end")
         return graph
@@ -143,54 +194,122 @@ class ChatAI:
         )
         return ai_role_name
 
-    async def _call_model(self, state: State) -> dict[str, Any]:
+    async def _query_or_respond(self, state: State):
+        """Generate tool call for retrieval or respond."""
+
+        prompt_decision = get_prompt_decision(state["messages"][-1].content)
+
+        log.debug(
+            f"{__name__}: {self._query_or_respond.__name__}: "
+            f"\nprompt_decision: \n{prompt_decision}\n"
+        )
+
+        response = await self.llm_analytical.ainvoke(prompt_decision)
+        log.debug(
+            f"{__name__}: {self._query_or_respond.__name__}: "
+            f"\nresponse (prompt_decision): \n{response}\n"
+        )
+        try:
+            decision = json.loads(response.content)
+        except JSONDecodeError as err:
+            log.error(
+                f"{__name__}: {self._query_or_respond.__name__}: "
+                f"\nAn error '{type(err)}': {err}\n"
+            )
+            decision = {"rag_decision": False}
+
+        log.info(
+            f"{__name__}: {self._query_or_respond.__name__}: "
+            f"\nRAG decision: {decision}\n"
+        )
+
+        if decision["rag_decision"]:
+            llm_with_tools = self.llm_analytical.bind_tools([retrieve])
+            response = await llm_with_tools.ainvoke(state["messages"])
+            return {"messages": response}
+        else:
+            return {"messages": [AIMessage(content="", rag_required=False)]}
+
+    async def _generate(self, state: State) -> dict[str, Any]:
         """Provides model call."""
 
         trimmed_messages = await self.trimmer.ainvoke(state["messages"])
+
+        # trimmed_messages
+        trimmed_messages_str = "\n\n".join(
+            [repr(message) for message in trimmed_messages]
+        )
+        log.debug(
+            f"{__name__}: {self._generate.__name__}: "
+            f"\ntrimmed_messages: \n{trimmed_messages_str}\n"
+        )
+
+        # docs_content
+        docs_system_message = (
+            "\n\n\nCheck the information in the retrieved documents from the retrieved context. If this information corresponds to the user's request, then rely on it when responding."
+            "\n\nRetrieved context:\n\n"
+        )
+
+        if self.use_rag and self.retriever == "langchain_tool":
+            retrieved_docs = trimmed_messages[-1].content
+            docs_content = f"{docs_system_message}{retrieved_docs}"
+        elif self.use_rag and self.retriever == "ollama":
+            docs_list = await get_docs(
+                trimmed_messages[-1].content,
+            )
+            docs_content = ""
+            if isinstance(docs_list, (list, tuple)):
+                docs_text = "\n\n".join(doc for doc in docs_list)
+                docs_content = f"{docs_system_message}{docs_text}"
+        else:
+            docs_content = ""
+
+        # for debug
+        # log.debug(
+        #     f"{__name__}: {self._generate.__name__}: "
+        #     f"\ndocs_content: \n{docs_content}\n"
+        # )
+
+        trimmed_messages_filtered = []
+        for message in trimmed_messages:
+            if isinstance(message, HumanMessage) or (
+                isinstance(message, AIMessage) and message.content
+            ):
+                trimmed_messages_filtered.append(message)
+
+        trimmed_messages_filtered_str = "\n\n".join(
+            [repr(message) for message in trimmed_messages_filtered]
+        )
+
+        log.debug(
+            f"{__name__}: {self._generate.__name__}: "
+            f"\ntrimmed_messages_filtered: \n{trimmed_messages_filtered_str}\n"
+        )
+
         prompt = await prompt_template.ainvoke(
             {
-                "messages": trimmed_messages,
+                "messages": trimmed_messages_filtered,
                 "language": state["language"],
-                "docs_content": state["docs_content"],
+                "docs_content": docs_content,
             }
         )
-        response = await self.llm.ainvoke(prompt)
+
+        prompt_str = "\n\n".join(
+            [
+                f">>>\n{message.type}: {message.content}"
+                for message in prompt.messages
+            ]
+            # for debug
+            # [repr(message) for message in prompt.messages]
+        )
+        prompt_str = f"{'-'*30}\n{prompt_str}\n{'-'*30}\n"
+        log.info(
+            f"{__name__}: {self._generate.__name__}: "
+            f"\nprompt: \n{prompt_str}\n"
+        )
+
+        response = await self.llm_main.ainvoke(prompt)
         return {"messages": response}
-
-    async def get_docs(self, input_message) -> list[str]:
-        """Gets relevant docs for retrieved context."""
-
-        vector_db_client = await get_vector_db_client()
-        collection = await vector_db_client.get_or_create_collection(
-            CHROMA_COLLECTION_NAME
-        )
-        queryembed = ollama.embeddings(
-            model=EMBEDDING_MODEL_NAME,
-            prompt=input_message,
-        )["embedding"]
-
-        relevant_docs_data = await collection.query(
-            query_embeddings=[queryembed],
-            n_results=EMBEDDING_SEARCH_RESULTS,
-        )
-        log.debug(f"{__name__}: relevant_docs_data: \n{relevant_docs_data}")
-
-        metadatas = relevant_docs_data["metadatas"][0]
-        sources = [metadata.get("source") for metadata in metadatas]
-        retrieved_docs = relevant_docs_data["documents"][0]
-
-        retrieved_data = [
-            data
-            for data in zip(
-                range(1, len(sources) + 1), sources, retrieved_docs
-            )
-        ]
-        relevant_docs = [
-            f"The retrieved document {data[0]}:\nSource: '{data[1]}'\n"
-            f"The context of the document:\n'{data[2]}'"
-            for data in retrieved_data
-        ]
-        return relevant_docs
 
     async def send_message(
         self, message: str, role: str | None = None
@@ -234,39 +353,25 @@ class ChatAI:
 
             log.debug(f"{__name__}: {self.process.__name__}: end (no input)")
         else:
-            # docs content
-            docs_list = ""
-            if self.use_rag:
-                docs_list = await self.get_docs(input_message)
-            if isinstance(docs_list, (list, tuple)):
-                docs_system_message = (
-                    "\n\n\nUse the retrieved documents of retrieved context "
-                    "to answer the question."
-                    "\n\nRetrieved context:\n\n"
-                )
-                docs_text = "\n\n".join(doc for doc in docs_list)
-                docs_content = f"{docs_system_message}{docs_text}"
-            else:
-                docs_content = ""
-            log.info(
-                f"{__name__}: {self.process.__name__}: "
-                f"\ndocs_content: \n{docs_content}"
-            )
-
             # stream
             message_list = []
-            async for chunc_data in self.graph.astream(
+            async for chunk_data in self.graph.astream(
                 {
                     "messages": HumanMessage(input_message),
                     "language": self.language,
-                    "docs_content": docs_content,
+                    "docs_content": "",
                 },
                 stream_mode="messages",
                 config=self.chat_config,
             ):
-                message_chunk = chunc_data[0].content
-                message_list.append(message_chunk)
-                yield message_chunk
+                if (
+                    chunk_data[0].type == "AIMessageChunk"
+                    and not chunk_data[0].tool_calls
+                    and chunk_data[1]["langgraph_node"] != "query_or_respond"
+                ):
+                    message_chunk = chunk_data[0].content
+                    message_list.append(message_chunk)
+                    yield message_chunk
 
             ai_message = "".join(message_list) if message_list else ""
 

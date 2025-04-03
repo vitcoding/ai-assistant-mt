@@ -46,6 +46,7 @@ class LLMModelConfig(BaseSettings):
     port: int = Field(default=11434)
     model: str = Field(default="llama3.2:3b")
     provider: str = Field(default="ollama")
+    analytical_model: str = Field(default="llama3.2:3b")  # model with tools
     embedding_model: str = Field(default="evilfreelancer/enbeddrus")
 
 
