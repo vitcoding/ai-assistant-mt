@@ -94,12 +94,12 @@ class VectorDBLoader:
         try:
             rating_fl = float(rating)
             if rating_fl > 7:
-                return f"High rating: '{rating}'"
+                return f"{rating} (high rating)"
             elif rating_fl > 5:
-                return f"Average rating: '{rating}'"
-            return f"Low rating: '{rating}'"
+                return f"{rating} (average rating)"
+            return f"{rating} (low rating)"
         except:
-            return "No rating"
+            return "no rating"
 
     def get_film_context(self, film: dict) -> str:
         """Преобразует данные о фильме из словаря в текст."""
@@ -112,13 +112,13 @@ class VectorDBLoader:
         actors_names = film.get("actors_names", "no data")
         writers_names = film.get("writers_names", "no data")
         film_text_data = (
-            f"Film '{title}':\n"
-            f"{self.get_rating_level(imdb_rating)}\n"
-            f"Description: '{description}'\n"
-            f"Genres: '{genres}'\n"
-            f"Directors: '{directors_names}'\n"
-            f"Actors: '{actors_names}'\n"
-            f"Writers: '{writers_names}'"
+            f"Film: {title}\n"
+            f"Rating: {self.get_rating_level(imdb_rating)}\n"
+            f"Description: {description}\n"
+            f"Genres: {genres}\n"
+            f"Directors: {directors_names}\n"
+            f"Actors: {actors_names}\n"
+            f"Writers: {writers_names}"
         )
         logger.debug(f"{__name__}: film_text_data: " f"\n{film_text_data}")
         return film_text_data
