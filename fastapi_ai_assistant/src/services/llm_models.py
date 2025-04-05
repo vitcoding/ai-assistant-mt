@@ -2,9 +2,9 @@
 MODELS = [
     "gemma2:9b",
     "llama3.2:3b",
-    "deepseek-r1:8b",
-    "gemma3:4b",
-    "gemma3:12b",
+    # "deepseek-r1:8b",
+    # "gemma3:4b",
+    # "gemma3:12b",
 ]
 
 
