@@ -18,10 +18,12 @@ MT-SERVICE-NAME = mt-search-service
 AI-DC = fastapi_ai_assistant/docker-compose-ai.yml
 AI-NAME = ai
 AI-SERVICE-NAME = ai_assistant_api
-# ai infrastructure
+# ai infrastructure (cpu)
 AIINFRA-DC = ai_infrastructure/docker-compose-aiinfra.yml
 AIINFRA-NAME = ollama
 AIINFRA-SERVICE-NAME = ollama-ai
+# ai infrastructure (intel gpu, debug)
+AIINFRA-DC-INTEL-GPU = ai_infrastructure/docker-compose-aiinfra.gpu-debug.yml
 
 
 # network
@@ -34,9 +36,10 @@ net-rm:
 up:
 	make net-create
 	make up-$(AIINFRA-NAME)
-	make up-$(AUTH-NAME)
 	docker compose -f $(AIINFRA-DC) exec -it ollama-ai ollama pull evilfreelancer/enbeddrus
-	docker compose -f $(AIINFRA-DC) exec -it ollama-ai ollama pull gemma3:4b
+	docker compose -f $(AIINFRA-DC) exec -it ollama-ai ollama pull llama3.2:3b
+	docker compose -f $(AIINFRA-DC) exec -it ollama-ai ollama pull gemma2:9b
+	make up-$(AUTH-NAME)
 	make up-$(MT-NAME)
 	make up-$(AI-NAME)
 destroy:
@@ -105,14 +108,17 @@ stop-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) stop
 start-$(AIINFRA-NAME):
 	docker compose -f $(AIINFRA-DC) start
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama pull gemma3:4b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama pull gemma3:12b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama run gemma3:4b
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama list
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama rm llama3.3
 
-# for intel gpu
-# docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml exec -it ollama-ai ollama pull gemma2:9b
+
+# Ollama commands examples
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull llama3.2:3b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull evilfreelancer/enbeddrus
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma2:9b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama pull gemma3:12b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama run gemma3:4b
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama list
+# docker compose -f ai_infrastructure/docker-compose-aiinfra.yml exec -it ollama-ai ollama rm gemma3:4b
 
 
 # auth service
@@ -252,9 +258,9 @@ start-debug:
 	make start-$(AUTH-NAME)
 	make ai-prj
 
-# ollama cpu (debug)
-up-ollama-cpu:
-	docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml up -d --build --force-recreate
-destroy-ollama-cpu:
-	docker compose -f ai_infrastructure/docker-compose-aiinfra.cpu-debug.yml down -v
+# ollama intel gpu (debug)
+up-ollama-igpu:
+	docker compose -f $(AIINFRA-DC-INTEL-GPU) up -d --build --force-recreate
+destroy-ollama-igpu:
+	docker compose -f $(AIINFRA-DC-INTEL-GPU) down -v
 	
